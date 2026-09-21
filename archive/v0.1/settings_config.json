@@ -1,0 +1,10 @@
+{
+  "labels": {
+    "nombre": "Apellidos y Nombres",
+    "colegio": "Colegio",
+    "grado": "Grado",
+    "procedencia": "Procedencia"
+  },
+  "num_alternatives": 4,
+  "num_questions": 15
+}

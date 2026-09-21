@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Runtime / datos de calificación
+uploads/*
+!uploads/.gitkeep
+static/processed/*
+!static/processed/.gitkeep
+reporte_resultados.xlsx
+
+# Android
+omr-camera/local.properties
+omr-camera/.idea/
+omr-camera/.gradle/
+omr-camera/**/build/
+omr-camera/.kotlin/
+*.apk
+*.ap_
+*.aab
+*.iml
+
+# Empaquetado local
+.release/
+*.rar
+*.zip
+!samples/**
+
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

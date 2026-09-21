@@ -1,0 +1,19 @@
+{
+  "labels": {
+    "nombre": "Apellidos y Nombres",
+    "colegio": "Colegio",
+    "grado": "Grado",
+    "procedencia": "Procedencia"
+  },
+  "num_alternatives": 4,
+  "num_questions": 15,
+  "scoring": {
+    "buenas": 10.0,
+    "malas": -1.0,
+    "blanco": 0.0
+  },
+  "branding": {
+    "title": "CONCURSO FERMAT",
+    "logo": "static/branding/logo.png"
+  }
+}

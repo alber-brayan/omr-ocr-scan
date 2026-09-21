@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha OMR A5 — {{ theme.title }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Tema por curso (inyectado desde Flask) */
+        :root {
+            --primary: {{ theme.css.primary }};
+            --primary-dark: {{ theme.css.primary_dark }};
+            --primary-light: {{ theme.css.primary_light }};
+            --border: {{ theme.css.border }};
+            --zebra: {{ theme.css.zebra }};
+            --header-bg: {{ theme.css.header_bg }};
+            --label: {{ theme.css.label }};
+            --bubble-text: {{ theme.css.bubble_text }};
+            --side-bar: {{ theme.css.primary }};
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #e2e8f0;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        .page {
+            width: 148mm;
+            height: 210mm;
+            background: #fff;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            overflow: hidden;
+            padding: 0;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+
+        /* Barras laterales de color (identificación rápida del área) */
+        .page::before,
+        .page::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1.8mm;
+            background: var(--side-bar);
+            z-index: 6;
+        }
+        .page::before { left: 0; }
+        .page::after { right: 0; }
+
+        /* Guías de orientación (mismo tamaño, forma única): ■ ▢ ● ⌞ */
+        .marker {
+            position: absolute;
+            width: 10mm;
+            height: 10mm;
+            background: #0f172a;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .top-left     { top: 5mm; left: 5mm; }           /* sólido */
+        .top-right    { top: 5mm; right: 5mm; }          /* marco */
+        .bottom-left  { bottom: 5mm; left: 5mm; border-radius: 50%; } /* círculo */
+        .bottom-right {
+            bottom: 5mm; right: 5mm;
+            clip-path: polygon(62% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 62%, 62% 62%);
+        }
+        .marker-hole {
+            position: absolute;
+            inset: 30%;
+            background: #fff;
+        }
+
+        .title-main {
+            display: flex;
+            align-items: center;
+            gap: 1.6mm;
+            min-width: 0;
+        }
+        .brand-logo {
+            height: 5.6mm;
+            width: auto;
+            max-width: 14mm;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .sheet-title {
+            position: absolute;
+            top: {{ geo.pad_top_mm }}mm;
+            left: {{ geo.pad_x_mm }}mm;
+            width: {{ geo.content_w_mm }}mm;
+            height: {{ geo.title_drop_mm }}mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding-bottom: 2.2mm;
+            border-bottom: 1.6px solid var(--primary-light);
+            gap: 3mm;
+            overflow: hidden;
+        }
+        .sheet-title h1 {
+            font-size: {% if geo.compact %}11px{% else %}12px{% endif %};
+            font-weight: 700;
+            color: var(--primary-dark);
+            letter-spacing: 0.2px;
+            line-height: 1.1;
+        }
+        .sheet-title h1 small {
+            display: block;
+            font-size: 6.5px;
+            font-weight: 500;
+            color: #64748b;
+            margin-top: 0.4mm;
+        }
+        .sheet-title span {
+            font-size: {% if geo.compact %}7px{% else %}7.5px{% endif %};
+            font-weight: 700;
+            color: var(--primary-dark);
+            background: var(--zebra);
+            border: 0.8px solid var(--border);
+            border-radius: 2mm;
+            padding: 1.2mm 2mm;
+            white-space: nowrap;
+        }
+
+        .header-card {
+            position: absolute;
+            top: {{ (geo.pad_top_mm + geo.title_drop_mm) | round(2) }}mm;
+            left: {{ geo.pad_x_mm }}mm;
+            width: {{ geo.content_w_mm }}mm;
+            height: {{ geo.header_h_mm }}mm;
+            box-sizing: border-box;
+            border: 1.3px solid var(--border);
+            border-radius: 2.2mm;
+            padding: {% if geo.compact %}2.4mm 3.2mm{% else %}3.2mm 3.2mm{% endif %};
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: var(--header-bg);
+            overflow: hidden;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 3mm;
+            width: 100%;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 1mm;
+            flex: 1;
+            min-width: 0;
+        }
+        .field.narrow { flex: 0 0 28%; }
+        .field.wide { flex: 1; }
+
+        .field-lbl {
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--label);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            line-height: 1;
+        }
+
+        .field-line {
+            height: {% if geo.compact %}4.2mm{% else %}5.5mm{% endif %};
+            border-bottom: 1.5px dotted var(--border);
+            width: 100%;
+        }
+
+        .q-zebra {
+            position: absolute;
+            border-radius: 1.2mm;
+            background: var(--zebra);
+            pointer-events: none;
+        }
+        .q-num {
+            position: absolute;
+            font-size: {% if geo.compact %}8px{% else %}9px{% endif %};
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-align: right;
+            line-height: 1;
+            transform: translateY(-50%);
+        }
+        .option-bubble {
+            position: absolute;
+            width: {{ geo.bubble_diameter_mm }}mm;
+            height: {{ geo.bubble_diameter_mm }}mm;
+            box-sizing: border-box;
+            border: 1.35px solid var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: {% if geo.compact or geo.num_alternatives >= 5 %}6.6px{% else %}7.5px{% endif %};
+            font-weight: 700;
+            color: var(--bubble-text);
+            background: #fff;
+        }
+
+        .footer-bar {
+            position: absolute;
+            left: {{ geo.pad_x_mm }}mm;
+            bottom: {{ (geo.pad_bottom_mm + geo.note_h_mm) | round(2) }}mm;
+            width: {{ geo.content_w_mm }}mm;
+            height: {{ geo.footer_h_mm }}mm;
+            box-sizing: border-box;
+            border: 1.3px solid var(--border);
+            border-radius: 2.2mm;
+            padding: 2.2mm 3.5mm;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr 1fr 1fr;
+            gap: 2.5mm;
+            background: var(--header-bg);
+            align-items: stretch;
+        }
+
+        .footer-block {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2mm;
+        }
+
+        .footer-block .field-lbl { font-size: 7.5px; }
+
+        .write-box {
+            height: 9mm;
+            border: 1.5px solid var(--primary-light);
+            border-radius: 5px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .write-box.orden { min-width: 14mm; }
+        .write-box.hora { min-width: 18mm; }
+        .write-box .hint {
+            font-size: 8px;
+            color: #cbd5e1;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .write-box.score-empty {
+            border-style: dashed;
+            border-color: var(--border);
+            background: var(--zebra);
+        }
+
+        .footer-note {
+            position: absolute;
+            left: {{ geo.pad_x_mm }}mm;
+            width: {{ geo.content_w_mm }}mm;
+            bottom: {{ (geo.pad_bottom_mm * 0.28) | round(2) }}mm;
+            margin: 0;
+            font-size: {% if geo.compact %}6.2px{% else %}6.5px{% endif %};
+            color: #94a3b8;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .page {
+                box-shadow: none;
+                margin: 0;
+                width: 148mm;
+                height: 210mm;
+            }
+            .no-print { display: none !important; }
+        }
+
+        .no-print-bar {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 240px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.15s ease;
+            text-align: center;
+        }
+        .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .btn-green { background: #16a34a; }
+        .btn-blue { background: #2563eb; }
+        .btn-secondary {
+            background: #fff;
+            color: #0f172a;
+            border: 1.5px solid #cbd5e1;
+            box-shadow: none;
+        }
+        .hint-box {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        .hint-box strong { color: #0f172a; }
+
+        .theme-switch {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .theme-switch a {
+            font-size: 11px;
+            padding: 10px 8px;
+        }
+        .theme-switch a.active {
+            outline: 2px solid #0f172a;
+            outline-offset: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print-bar no-print">
+        <div class="theme-switch">
+            <a class="btn btn-green {% if theme.id == 'Comunicacion' %}active{% endif %}"
+               href="/sheet?curso=Comunicacion">Comunicación</a>
+            <a class="btn btn-blue {% if theme.id == 'Matematica' %}active{% endif %}"
+               href="/sheet?curso=Matematica">Matemática</a>
+        </div>
+
+        <a class="btn" href="/download_sheet_pdf?curso={{ theme.id }}"
+           style="background: var(--primary);">
+            Descargar PDF vectorial (A5)
+        </a>
+        <button class="btn btn-secondary" onclick="window.print()">Imprimir vista previa</button>
+        <a href="/" class="btn btn-secondary">Volver al Panel</a>
+
+        <div class="hint-box">
+            <strong>{{ theme.title }}</strong><br>
+            La vista de la izquierda usa las mismas medidas que el PDF.<br>
+            Para imprimir y calificar, descargue el PDF vectorial.<br><br>
+            • Verde = Comunicación<br>
+            • Azul = Matemática<br>
+            • Guías de esquina distintas (■ ▢ ● ⌞) para girar la foto<br>
+            • Nº Orden y Hora al pie (OCR)
+        </div>
+    </div>
+
+    <div class="page" id="a5SheetElement">
+        <div class="marker top-left" title="Guía TL — sólido"></div>
+        <div class="marker top-right" title="Guía TR — marco"><span class="marker-hole"></span></div>
+        <div class="marker bottom-left" title="Guía BL — círculo"></div>
+        <div class="marker bottom-right" title="Guía BR — L"></div>
+
+        <div class="sheet-title">
+            {% set brand = config.branding or {} %}
+            <div class="title-main">
+                {% if brand.logo %}
+                <img class="brand-logo" src="/{{ brand.logo }}" alt="">
+                {% endif %}
+                <h1>
+                    {{ theme.title }}
+                    {% if brand.title %}<small>{{ brand.title }}</small>{% endif %}
+                </h1>
+            </div>
+            <span>{{ theme.badge }} · {{ config.num_questions }} preg. · {{ config.num_alternatives }} alt.</span>
+        </div>
+
+        <div class="header-card">
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.nombre }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.colegio }}</span>
+                    <span class="field-line"></span>
+                </div>
+                <div class="field narrow">
+                    <span class="field-lbl">{{ config.labels.grado }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.procedencia }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+        </div>
+
+        {% set ph = 210.0 %}
+        {% set d = geo.bubble_diameter_mm %}
+        {% set rh = geo.row_h_mm %}
+        {% set opts = ['A','B','C','D','E'][:config.num_alternatives] %}
+        {% for cy in geo.y_left_mm %}
+            {% set q = loop.index %}
+            {% if q % 2 == 0 %}
+            <div class="q-zebra" style="left:{{ geo.left_col_x_mm }}mm;top:{{ (ph - cy - rh * 0.42)|round(2) }}mm;width:{{ geo.col_w_mm }}mm;height:{{ (rh * 0.84)|round(2) }}mm;"></div>
+            {% endif %}
+            <div class="q-num" style="left:{{ geo.left_col_x_mm }}mm;width:{{ geo.num_w_mm }}mm;top:{{ (ph - cy)|round(2) }}mm;">{{ "%02d"|format(q) }}</div>
+            {% for opt in opts %}
+            <div class="option-bubble" style="left:{{ (geo.x_left_mm[loop.index0] - d / 2)|round(2) }}mm;top:{{ (ph - cy - d / 2)|round(2) }}mm;">{{ opt }}</div>
+            {% endfor %}
+        {% endfor %}
+        {% for cy in geo.y_right_mm %}
+            {% set q = geo.y_left_mm|length + loop.index %}
+            {% if q % 2 == 0 %}
+            <div class="q-zebra" style="left:{{ geo.right_col_x_mm }}mm;top:{{ (ph - cy - rh * 0.42)|round(2) }}mm;width:{{ geo.col_w_mm }}mm;height:{{ (rh * 0.84)|round(2) }}mm;"></div>
+            {% endif %}
+            <div class="q-num" style="left:{{ geo.right_col_x_mm }}mm;width:{{ geo.num_w_mm }}mm;top:{{ (ph - cy)|round(2) }}mm;">{{ "%02d"|format(q) }}</div>
+            {% for opt in opts %}
+            <div class="option-bubble" style="left:{{ (geo.x_right_mm[loop.index0] - d / 2)|round(2) }}mm;top:{{ (ph - cy - d / 2)|round(2) }}mm;">{{ opt }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="footer-bar">
+            <div class="footer-block">
+                <span class="field-lbl">Nº Orden</span>
+                <div class="write-box orden">
+                    <span class="hint">01–99</span>
+                </div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Hora entrega</span>
+                <div class="write-box hora">
+                    <span class="hint">HH:MM</span>
+                </div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Buenas</span>
+                <div class="write-box score-empty"></div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Malas</span>
+                <div class="write-box score-empty"></div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">En blanco</span>
+                <div class="write-box score-empty"></div>
+            </div>
+        </div>
+        <p class="footer-note">Rellene cada círculo. No cubra las 4 guías de esquina (sirven para orientar la foto).</p>
+    </div>
+</body>
+</html>

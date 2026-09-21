@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path name="lotes" path="lotes/" />
+    <cache-path name="zips" path="zips/" />
+    <external-path name="downloads" path="Download/LectoraOMR/" />
+</paths>

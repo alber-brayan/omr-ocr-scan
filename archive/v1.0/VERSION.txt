@@ -1,0 +1,4 @@
+Version: 1.0
+Nombre: Flask con lotes y packs
+Origen: D:\OCR OMR SCAN 12 (sin la app Android)
+Notas: Calificar por pack, extraer claves, logo. La app Android va en v1.5.

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha OMR A5 — {{ theme.title }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Tema por curso (inyectado desde Flask) */
+        :root {
+            --primary: {{ theme.css.primary }};
+            --primary-dark: {{ theme.css.primary_dark }};
+            --primary-light: {{ theme.css.primary_light }};
+            --border: {{ theme.css.border }};
+            --zebra: {{ theme.css.zebra }};
+            --header-bg: {{ theme.css.header_bg }};
+            --label: {{ theme.css.label }};
+            --bubble-text: {{ theme.css.bubble_text }};
+            --side-bar: {{ theme.css.primary }};
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #e2e8f0;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        .page {
+            width: 148mm;
+            height: 210mm;
+            background: #fff;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 16mm 14mm 14mm 14mm;
+        }
+
+        /* Barras laterales de color (identificación rápida del área) */
+        .page::before,
+        .page::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1.8mm;
+            background: var(--side-bar);
+            z-index: 6;
+        }
+        .page::before { left: 0; }
+        .page::after { right: 0; }
+
+        .marker {
+            position: absolute;
+            width: 9mm;
+            height: 9mm;
+            background: #0f172a;
+            border-radius: 1px;
+            z-index: 5;
+        }
+        /* TL más grande: ancla de orientación 90/180/270°. Centros ≈ 10 mm del borde. */
+        .top-left     { top: 4mm; left: 4mm; width: 12mm; height: 12mm; }
+        .top-right    { top: 5.5mm; right: 5.5mm; }
+        .bottom-left  { bottom: 5.5mm; left: 5.5mm; }
+        .bottom-right { bottom: 5.5mm; right: 5.5mm; }
+
+        .sheet-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3mm;
+            padding-bottom: 2mm;
+            border-bottom: 2px solid var(--primary-light);
+            gap: 4mm;
+        }
+        .sheet-title h1 {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            letter-spacing: 0.4px;
+            line-height: 1.15;
+        }
+        .sheet-title h1 small {
+            display: block;
+            font-size: 8px;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: 0.2px;
+            margin-top: 1px;
+        }
+        .sheet-title span {
+            font-size: 8.5px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            background: var(--zebra);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+
+        .header-card {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 3.5mm 4mm;
+            display: flex;
+            flex-direction: column;
+            gap: 3.2mm;
+            background: linear-gradient(180deg, var(--header-bg) 0%, #ffffff 100%);
+            margin-bottom: 3mm;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 3mm;
+            width: 100%;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 1mm;
+            flex: 1;
+            min-width: 0;
+        }
+        .field.narrow { flex: 0 0 28%; }
+        .field.wide { flex: 1; }
+
+        .field-lbl {
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--label);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            line-height: 1;
+        }
+
+        .field-line {
+            height: 5.5mm;
+            border-bottom: 1.5px dotted var(--border);
+            width: 100%;
+        }
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4mm 6mm;
+            flex: 1 1 auto;
+            min-height: 0;
+            align-content: stretch;
+        }
+
+        .questions-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            gap: 0;
+            min-height: 0;
+        }
+
+        .question-row {
+            display: flex;
+            align-items: center;
+            gap: 2.5mm;
+            padding: 1.2mm 2mm;
+            border-radius: 4px;
+        }
+        .question-row.zebra { background: var(--zebra); }
+
+        .question-number {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            width: 5mm;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .options-container {
+            display: flex;
+            gap: 2.2mm;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+
+        .option-bubble {
+            width: 6.2mm;
+            height: 6.2mm;
+            border: 1.6px solid var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8.5px;
+            font-weight: 700;
+            color: var(--bubble-text);
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .footer-bar {
+            margin-top: 3mm;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 3mm 4mm;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr 1fr 1fr;
+            gap: 3mm;
+            background: var(--header-bg);
+            align-items: stretch;
+        }
+
+        .footer-block {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2mm;
+        }
+
+        .footer-block .field-lbl { font-size: 7.5px; }
+
+        .write-box {
+            height: 9mm;
+            border: 1.5px solid var(--primary-light);
+            border-radius: 5px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .write-box.orden { min-width: 14mm; }
+        .write-box.hora { min-width: 18mm; }
+        .write-box .hint {
+            font-size: 8px;
+            color: #cbd5e1;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .write-box.score-empty {
+            border-style: dashed;
+            border-color: var(--border);
+            background: var(--zebra);
+        }
+
+        .footer-note {
+            margin-top: 1.5mm;
+            font-size: 7px;
+            color: #94a3b8;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .page {
+                box-shadow: none;
+                margin: 0;
+                width: 148mm;
+                height: 210mm;
+            }
+            .no-print { display: none !important; }
+        }
+
+        .no-print-bar {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 240px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.15s ease;
+            text-align: center;
+        }
+        .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .btn-green { background: #16a34a; }
+        .btn-blue { background: #2563eb; }
+        .btn-secondary {
+            background: #fff;
+            color: #0f172a;
+            border: 1.5px solid #cbd5e1;
+            box-shadow: none;
+        }
+        .hint-box {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        .hint-box strong { color: #0f172a; }
+
+        .theme-switch {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .theme-switch a {
+            font-size: 11px;
+            padding: 10px 8px;
+        }
+        .theme-switch a.active {
+            outline: 2px solid #0f172a;
+            outline-offset: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print-bar no-print">
+        <div class="theme-switch">
+            <a class="btn btn-green {% if theme.id == 'Comunicacion' %}active{% endif %}"
+               href="/sheet?curso=Comunicacion">Comunicación</a>
+            <a class="btn btn-blue {% if theme.id == 'Matematica' %}active{% endif %}"
+               href="/sheet?curso=Matematica">Matemática</a>
+        </div>
+
+        <a class="btn" href="/download_sheet_pdf?curso={{ theme.id }}"
+           style="background: var(--primary);">
+            Descargar PDF vectorial (A5)
+        </a>
+        <button class="btn btn-secondary" onclick="window.print()">Imprimir vista previa</button>
+        <a href="/" class="btn btn-secondary">Volver al Panel</a>
+
+        <div class="hint-box">
+            <strong>{{ theme.title }}</strong><br>
+            PDF vectorial ideal para impresión láser en alta calidad.<br><br>
+            • Verde = Comunicación<br>
+            • Azul = Matemática<br>
+            • 4 marcadores de esquina<br>
+            • Nº Orden y Hora al pie (OCR)
+        </div>
+    </div>
+
+    <div class="page" id="a5SheetElement">
+        <div class="marker top-left"></div>
+        <div class="marker top-right"></div>
+        <div class="marker bottom-left"></div>
+        <div class="marker bottom-right"></div>
+
+        <div class="sheet-title">
+            <h1>
+                {{ theme.title }}
+                <small>Ficha de Respuestas OMR</small>
+            </h1>
+            <span>{{ theme.badge }} · {{ config.num_questions }} preg. · {{ config.num_alternatives }} alt.</span>
+        </div>
+
+        <div class="header-card">
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.nombre }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.colegio }}</span>
+                    <span class="field-line"></span>
+                </div>
+                <div class="field narrow">
+                    <span class="field-lbl">{{ config.labels.grado }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+            <div class="header-row">
+                <div class="field wide">
+                    <span class="field-lbl">{{ config.labels.procedencia }}</span>
+                    <span class="field-line"></span>
+                </div>
+            </div>
+        </div>
+
+        {% set mid = ((config.num_questions + 1) // 2) | int %}
+        <div class="content-layout">
+            <div class="questions-section">
+                {% for q in range(1, mid + 1) %}
+                <div class="question-row {{ 'zebra' if q % 2 == 0 }}">
+                    <div class="question-number">{{ "%02d" | format(q) }}</div>
+                    <div class="options-container">
+                        {% for opt in ['A','B','C','D','E'][:config.num_alternatives] %}
+                        <div class="option-bubble">{{ opt }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="questions-section">
+                {% for q in range(mid + 1, config.num_questions + 1) %}
+                <div class="question-row {{ 'zebra' if q % 2 == 0 }}">
+                    <div class="question-number">{{ "%02d" | format(q) }}</div>
+                    <div class="options-container">
+                        {% for opt in ['A','B','C','D','E'][:config.num_alternatives] %}
+                        <div class="option-bubble">{{ opt }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="footer-bar">
+            <div class="footer-block">
+                <span class="field-lbl">Nº Orden</span>
+                <div class="write-box orden">
+                    <span class="hint">01–99</span>
+                </div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Hora entrega</span>
+                <div class="write-box hora">
+                    <span class="hint">HH:MM</span>
+                </div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Buenas</span>
+                <div class="write-box score-empty"></div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">Malas</span>
+                <div class="write-box score-empty"></div>
+            </div>
+            <div class="footer-block">
+                <span class="field-lbl">En blanco</span>
+                <div class="write-box score-empty"></div>
+            </div>
+        </div>
+        <p class="footer-note">Rellene completamente cada círculo con lápiz o lapicero. No use corrector.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Version: 0.1
+Nombre: Flask inicial
+Origen: D:\OCR OMR SCAN
+Notas: Primera app web para leer y calificar fichas OMR.

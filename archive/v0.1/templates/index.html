@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR + OCR Exam Scanner - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary: #16a34a;
+            --primary-hover: #15803d;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #2d3748;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding-bottom: 40px;
+        }
+
+        /* Header block */
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1.5px solid rgba(34, 197, 94, 0.1);
+        }
+
+        header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #4ade80, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 12px 6px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.4);
+        }
+
+        /* View Panels */
+        .panel {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .panel.active {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4ade80;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], select {
+            background-color: var(--background);
+            color: var(--text);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 11px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Toggle Button Group for Course */
+        .toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background-color: var(--background);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 9px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);
+        }
+
+        /* Camera Buttons */
+        .scan-btn-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .btn-trigger {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #15803d 100%);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-trigger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(22, 163, 74, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Verification Panel (OCR crops validation) */
+        .verification-card {
+            background-color: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ocr-verify-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--background);
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ocr-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .ocr-meta span {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .ocr-meta p {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ocr-visuals {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ocr-crops-row {
+            display: flex;
+            gap: 4px;
+            background-color: #000;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ocr-crops-row img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 2px;
+        }
+
+        .ocr-input {
+            width: 70px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 8px !important;
+            letter-spacing: 1px;
+        }
+
+        /* Scored Results breakdown */
+        .breakdown-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .breakdown-box {
+            background-color: var(--background);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .breakdown-box.bien { border: 1.5px solid #22c55e; background: rgba(34, 197, 94, 0.12); }
+        .breakdown-box.bien strong { color: #4ade80; }
+        .breakdown-box.mal { border: 1.5px solid #ef4444; background: rgba(239, 68, 68, 0.12); }
+        .breakdown-box.mal strong { color: #f87171; }
+        .breakdown-box.blanco { border: 1.5px solid #38bdf8; background: rgba(56, 189, 248, 0.12); }
+        .breakdown-box.blanco strong { color: #7dd3fc; }
+
+        .omr-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            font-size: 11px;
+            color: var(--text-muted);
+            align-items: center;
+        }
+        .omr-legend i {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: -1px;
+            border: 1.5px solid rgba(255,255,255,0.35);
+        }
+        .q-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .q-chip {
+            min-width: 36px;
+            padding: 4px 6px;
+            border-radius: 7px;
+            font-size: 10px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .q-chip.bien { background: rgba(34,197,94,0.2); color: #86efac; border-color: #22c55e; }
+        .q-chip.mal { background: rgba(239,68,68,0.2); color: #fca5a5; border-color: #ef4444; }
+        .q-chip.blanco { background: rgba(56,189,248,0.18); color: #7dd3fc; border-color: #38bdf8; }
+
+        .breakdown-box span {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .breakdown-box strong {
+            font-size: 15px;
+        }
+
+        .breakdown-box.score {
+            grid-column: span 3;
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(15, 23, 42, 0.5) 100%);
+            border: 1.5px solid var(--primary);
+            padding: 12px;
+        }
+
+        .breakdown-box.score strong {
+            font-size: 20px;
+            color: #4ade80;
+        }
+
+        /* Folder Tree styling */
+        .folder {
+            margin-left: 10px;
+            margin-top: 5px;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            user-select: none;
+            transition: background-color 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .folder-header:hover {
+            background-color: rgba(255, 255, 255, 0.07);
+        }
+
+        .folder-content {
+            display: none;
+            padding-left: 15px;
+            border-left: 1px dashed rgba(255, 255, 255, 0.1);
+            margin-left: 18px;
+            margin-top: 5px;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .folder.open > .folder-content {
+            display: flex;
+        }
+
+        .folder-icon {
+            color: #f59e0b;
+        }
+
+        .student-record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.01);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .student-record-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .student-record-meta strong {
+            color: var(--text);
+        }
+
+        .student-record-meta span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .student-score-badge {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        /* Loading Screen */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 15px;
+            backdrop-filter: blur(8px);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alerts */
+        .alert {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: none;
+            text-align: center;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            display: block;
+        }
+
+        /* Coordinates list for Template Panel */
+        .coords-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .coord-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--background);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .coord-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .coord-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coord-input {
+            width: 60px;
+            text-align: center;
+            padding: 6px !important;
+            font-size: 12px !important;
+        }
+
+        .coord-btn {
+            background-color: var(--surface-hover);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .coord-btn:hover {
+            background-color: var(--primary);
+        }
+
+        /* Visual Keys Grid Matrix styling */
+        .keys-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .keys-grid-table th, .keys-grid-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .keys-grid-table th {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .key-btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .key-option-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .key-option-btn:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        .key-option-btn.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Spinner overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="font-weight: 600; font-size: 16px; margin-top: 10px;" id="loadingText">Procesando examen...</p>
+    </div>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <h1>OMR + OCR Exam Scanner</h1>
+            <p>Calificación por Cámara y Cajas de Texto OCR</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('scanPanel')">Calificar</button>
+            <button class="tab-btn" onclick="switchTab('keysPanel')">Claves</button>
+            <button class="tab-btn" onclick="switchTab('registryPanel')">Registro</button>
+            <button class="tab-btn" onclick="switchTab('templatePanel')">Plantilla</button>
+        </div>
+
+        <!-- ---------------------------------------------------- -->
+        <!-- TAB 1: CALIFICAR / SCAN PANEL                        -->
+        <!-- ---------------------------------------------------- -->
+        <div class="panel active" id="scanPanel">
+            
+            <!-- Config Form -->
+            <div class="card" id="configCard">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                    Ficha de Envío
+                </h2>
+                
+                <!-- School and Location -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="colegioInput" id="lblColegio">Colegio</label>
+                        <input type="text" id="colegioInput" value="Colegio San José">
+                    </div>
+                    <div class="form-group">
+                        <label for="lugarInput" id="lblProcedencia">Procedencia</label>
+                        <input type="text" id="lugarInput" value="Lima">
+                    </div>
+                </div>
+
+                <!-- Salon and Course -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salonSelect" id="lblGrado">Sección / Salón</label>
+                        <select id="salonSelect">
+                            <option value="Sec 1">Sec 1</option>
+                            <option value="Sec 2">Sec 2</option>
+                            <option value="Sec 3">Sec 3</option>
+                            <option value="Sec 4">Sec 4</option>
+                            <option value="Sec 5">Sec 5</option>
+                            <option value="Prim 2">Prim 2</option>
+                            <option value="Prim 3">Prim 3</option>
+                            <option value="Prim 4">Prim 4</option>
+                            <option value="Prim 5">Prim 5</option>
+                            <option value="Prim 6">Prim 6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Curso / Materia</label>
+                        <div class="toggle-group" id="courseGroup">
+                            <button class="toggle-btn active" data-value="Matematica">Matemática</button>
+                            <button class="toggle-btn" data-value="Comunicacion">Comunicación</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active key tracker (before scanning) -->
+                <div id="activeKeyBanner" style="background:#0f172a; border:1.5px solid rgba(96,165,250,0.3); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--text-muted);">
+                    <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:4px;">
+                        <strong style="color:#93c5fd;">Clave activa para calificar</strong>
+                        <button type="button" onclick="refreshActiveKeyBanner()" style="background:transparent; border:1px solid #334155; color:#94a3b8; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer;">Actualizar</button>
+                    </div>
+                    <div id="activeKeyBannerBody">Seleccione salón y curso…</div>
+                </div>
+
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                    Flujo: <strong style="color:#4ade80;">solo OMR</strong> · etiquetas <strong>Est 01…</strong> ·
+                    compresión solo si la foto supera <strong>20 MPx</strong> · se guarda hora de calificación y PC.
+                </p>
+
+                <!-- Scan Trigger — lote es el flujo principal -->
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+                    <div class="scan-btn-wrapper">
+                        <input type="file" id="batchInput" class="file-input" accept="image/*" multiple style="display:none;" onchange="handleBatchUpload(event)">
+                        <button class="btn-trigger" onclick="document.getElementById('batchInput').click()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            Calificar en Lote (principal)
+                        </button>
+                    </div>
+                    <div class="scan-btn-wrapper">
+                        <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
+                        <button class="btn-secondary" style="width:100%;">
+                            Una ficha (cámara)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Batch Progress + downloads -->
+                <div class="panel" id="batchPanel" style="display:none; flex-direction:column; gap:12px; padding:15px; margin-top: 15px; background: #0f172a; border: 1.5px solid #22c55e; border-radius:12px;">
+                    <h3 style="color: #4ade80; display:flex; align-items:center; gap:8px; font-size:14px; margin:0;" id="batchPanelTitle">
+                        <span class="spinner" id="batchSpinner" style="width:14px; height:14px; border:2px solid #22c55e; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; display:inline-block;"></span>
+                        Procesamiento en Lote...
+                    </h3>
+                    <div style="font-size:12px; color:#94a3b8; display:flex; justify-content:space-between;">
+                        <span id="batchStatusText">Procesando 0 de 0</span>
+                        <span id="batchPercentage">0%</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#1e293b; border-radius:4px; overflow:hidden;">
+                        <div id="batchProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #22c55e, #4ade80); transition:width 0.3s ease;"></div>
+                    </div>
+                    <div id="batchLog" style="max-height: 140px; overflow-y: auto; font-size: 11px; color:#cbd5e1; background:#020617; padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:4px; font-family: monospace;"></div>
+                    <div id="batchDownloadBar" style="display:none; flex-direction:column; gap:8px;">
+                        <div style="font-size:12px; color:#4ade80;" id="batchDoneSummary"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <a id="btnBatchPdf" href="#" class="btn-trigger" style="flex:1; min-width:140px; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center;">PDF todas las cartillas</a>
+                            <a id="btnBatchPng" href="#" class="btn-secondary" style="flex:1; min-width:140px; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center; padding:12px;">ZIP PNG múltiples</a>
+                        </div>
+                        <div class="omr-legend" style="margin-top:4px;">
+                            <span><i style="background:#22c55e;"></i>Bien</span>
+                            <span><i style="background:#ef4444;"></i>Mal</span>
+                            <span><i style="background:#38bdf8;"></i>Blanco</span>
+                            <span><i style="background:#f59e0b;"></i>Clave</span>
+                        </div>
+                        <div id="batchThumbs" style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; max-height:180px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+                
+                <div class="alert" id="scanError">Error.</div>
+            </div>
+
+            <!-- Verificación simple (una ficha) — sin OCR de nombre -->
+            <div class="panel" id="verificationPanel" style="display:none; flex-direction:column; gap:15px;">
+                <div class="verification-card">
+                    <h2 style="color: #4ade80;">Resultado OMR (Est enumerado)</h2>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+                        Sin OCR: el ID es la enumeración del lote (Est 01…). Puedes editar el código si quieres.
+                    </p>
+
+                    <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                        <div class="ocr-meta"><span>Apellidos y Nombres</span></div>
+                        <input type="text" class="ocr-input" id="nombreOcrInput" style="width:100%; max-width:none; text-align:left; padding:8px 12px;" placeholder="Apellidos y Nombres">
+                    </div>
+                    <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                        <div class="ocr-meta"><span>Colegio</span></div>
+                        <input type="text" class="ocr-input" id="colegioOcrInput" style="width:100%; max-width:none; text-align:left; padding:8px 12px;" placeholder="Colegio">
+                    </div>
+                    <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                        <div class="ocr-meta"><span>Procedencia</span></div>
+                        <input type="text" class="ocr-input" id="procedenciaOcrInput" style="width:100%; max-width:none; text-align:left; padding:8px 12px;" placeholder="Procedencia / Lugar">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                        <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                            <div class="ocr-meta"><span>Nº Orden</span></div>
+                            <input type="text" class="ocr-input" id="idOcrInput" maxlength="3" placeholder="02">
+                        </div>
+                        <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                            <div class="ocr-meta"><span>Hora</span></div>
+                            <input type="text" class="ocr-input" id="horaOcrInput" maxlength="5" placeholder="10:25">
+                        </div>
+                        <div class="ocr-verify-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                            <div class="ocr-meta"><span>Grado</span></div>
+                            <input type="text" class="ocr-input" id="gradoOcrInput" maxlength="8" placeholder="4TO">
+                        </div>
+                    </div>
+                    <div id="ocrEngineInfo" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
+                </div>
+
+                <!-- Active answer key tracker -->
+                <div class="card" id="claveTrackerCard" style="border:1.5px solid rgba(96,165,250,0.35);">
+                    <h2 style="color:#60a5fa;">Clave Aplicada (Trakeo)</h2>
+                    <div id="claveTrackerInfo" style="font-size:13px; color:var(--text-muted); line-height:1.5;"></div>
+                    <div id="claveTrackerPreview" style="margin-top:8px; font-family:monospace; font-size:12px; background:#0f172a; padding:10px; border-radius:8px; color:#e2e8f0; word-break:break-word;"></div>
+                    <div id="claveTrackerWarnings" style="margin-top:8px; font-size:12px; color:#fbbf24;"></div>
+                </div>
+
+                <!-- Score breakdown (readonly before confirm) -->
+                <div class="card">
+                    <h2>Desglose de Calificación OMR</h2>
+                    
+                    <div class="breakdown-row">
+                        <div class="breakdown-box bien">
+                            <span>Buenas (+10)</span>
+                            <strong id="valBuenas">0</strong>
+                        </div>
+                        <div class="breakdown-box mal">
+                            <span>Malas (-1)</span>
+                            <strong id="valMalas">0</strong>
+                        </div>
+                        <div class="breakdown-box blanco">
+                            <span>Blancos (0)</span>
+                            <strong id="valBlancos">0</strong>
+                        </div>
+                        <div class="breakdown-box score">
+                            <span>PUNTAJE FINAL</span>
+                            <strong id="valPuntaje">0 pts</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;" id="lblVerifyName">Nombre de Alumno:</span>
+                        <p style="font-size: 15px; font-weight: 700; color: #4ade80;" id="valName">Estudiante</p>
+                    </div>
+
+                    <!-- Warped visual preview overlay -->
+                    <div style="margin-top: 10px; display:flex; flex-direction:column; gap:5px;">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Alineación Visual (OMR):</span>
+                        <div class="omr-legend">
+                            <span><i style="background:#22c55e;"></i>Bien (✓ verde)</span>
+                            <span><i style="background:#ef4444;"></i>Mal (✗ rojo)</span>
+                            <span><i style="background:#38bdf8;"></i>Blanco (○ azul)</span>
+                            <span><i style="background:#f59e0b;"></i>Clave si falló</span>
+                        </div>
+                        <div style="width: 100%; border: 1.5px solid rgba(255, 255, 255, 0.1); border-radius: 8px; overflow: hidden; background-color: #000;">
+                            <img id="valGradedPreview" src="" alt="Graded scan" style="width:100%; height:auto; max-height:420px; object-fit:contain;">
+                        </div>
+                        <div id="omrQuestionChips" class="q-chips"></div>
+                        <!-- Descargar imagen de salida calificada -->
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                            <button type="button" class="btn-secondary" onclick="downloadGradedPNG()" style="flex:1; min-width:140px; font-size:12px; padding:10px;">
+                                Descargar PNG
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="downloadGradedPDF()" style="flex:1; min-width:140px; font-size:12px; padding:10px;">
+                                Descargar PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirm and save -->
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top: 10px;">
+                        <button class="btn-trigger" onclick="confirmScanResults()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Confirmar y Registrar Calificación
+                        </button>
+                        <button class="btn-secondary" onclick="cancelScanVerification()">
+                            Cancelar y Escanear de Nuevo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fichas OMR por área (PDF vectorial láser) -->
+            <div class="card" style="gap:10px;">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    Fichas de respuestas (imprimir)
+                </h2>
+                <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin:0;">
+                    Dos diseños para no confundir el curso al calificar:
+                    <strong style="color:#4ade80;">verde = Comunicación</strong> ·
+                    <strong style="color:#60a5fa;">azul = Matemática</strong>.
+                    PDF vectorial A5 para impresión láser en alta calidad.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <a href="/download_sheet_pdf?curso=Comunicacion" class="btn-trigger" style="text-decoration:none; text-align:center; background:#16a34a; font-size:12px; padding:12px 8px;">
+                        PDF Comunicación
+                    </a>
+                    <a href="/download_sheet_pdf?curso=Matematica" class="btn-trigger" style="text-decoration:none; text-align:center; background:#2563eb; font-size:12px; padding:12px 8px;">
+                        PDF Matemática
+                    </a>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <a href="/sheet?curso=Comunicacion" class="btn-secondary" target="_blank" style="text-align:center; font-size:12px; padding:10px 8px;">
+                        Vista Comunicación
+                    </a>
+                    <a href="/sheet?curso=Matematica" class="btn-secondary" target="_blank" style="text-align:center; font-size:12px; padding:10px 8px;">
+                        Vista Matemática
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------------------------------------------------- -->
+        <!-- TAB 2: CLAVES DE RESPUESTAS (Visual Keys Manager)    -->
+        <!-- ---------------------------------------------------- -->
+        <div class="panel" id="keysPanel">
+            <div class="card">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><key path="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></key></svg>
+                    Gestión de Claves de Respuestas
+                </h2>
+                
+                <!-- Selector -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="keysSalonSelect">Seleccionar Sección</label>
+                        <select id="keysSalonSelect" onchange="displayKeysGrid()">
+                            <option value="Sec 1">Sec 1</option>
+                            <option value="Sec 2">Sec 2</option>
+                            <option value="Sec 3">Sec 3</option>
+                            <option value="Sec 4">Sec 4</option>
+                            <option value="Sec 5">Sec 5</option>
+                            <option value="Prim 2">Prim 2</option>
+                            <option value="Prim 3">Prim 3</option>
+                            <option value="Prim 4">Prim 4</option>
+                            <option value="Prim 5">Prim 5</option>
+                            <option value="Prim 6">Prim 6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="keysCourseSelect">Curso / Materia</label>
+                        <select id="keysCourseSelect" onchange="displayKeysGrid()">
+                            <option value="Matematica">Matemática</option>
+                            <option value="Comunicacion">Comunicación</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Matrix Key Builder -->
+                <div style="max-height: 380px; overflow-y: auto; border: 1.5px solid rgba(255, 255, 255, 0.05); border-radius: 10px; background-color: var(--background);">
+                    <table class="keys-grid-table">
+                        <thead>
+                            <tr id="keysGridHeader">
+                                <th>Preg.</th>
+                                <th>Alternativas correctas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keysGridBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="keysFingerprintInfo" style="margin-top:10px; font-size:12px; color:var(--text-muted); background:#0f172a; border-radius:8px; padding:10px;"></div>
+                <div id="keysSummaryPanel" style="margin-top:12px; max-height:180px; overflow-y:auto; font-size:11px; color:#cbd5e1; background:#020617; border-radius:8px; padding:8px;"></div>
+
+                <button class="btn-trigger" onclick="saveAnswerKeysGrid()" style="margin-top: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Guardar Claves de Respuestas
+                </button>
+            </div>
+        </div>
+
+        <!-- ---------------------------------------------------- -->
+        <!-- TAB 3: REGISTRO HISTORICO                            -->
+        <!-- ---------------------------------------------------- -->
+        <div class="panel" id="registryPanel">
+            <div class="card">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    Historial por Carpetas (<span id="lblRegistryPath">Procedencia/Colegio/Grado</span>)
+                </h2>
+                
+                <div id="foldersContainer" style="margin-top: 10px; display:flex; flex-direction:column; gap:8px;">
+                    <!-- Folders rendered dynamically -->
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:15px; flex-wrap: wrap;">
+                    <a href="/download_report" class="btn-trigger" style="flex:1; min-width: 160px; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+                        Excel registro
+                    </a>
+                    <a id="regBtnPdf" href="/download_batch_pdf" class="btn-secondary" style="flex:1; min-width:160px; display:flex; align-items:center; justify-content:center; text-decoration:none; padding:12px;">
+                        PDF último lote
+                    </a>
+                    <a id="regBtnPng" href="/download_batch_pngs" class="btn-secondary" style="flex:1; min-width:160px; display:flex; align-items:center; justify-content:center; text-decoration:none; padding:12px;">
+                        ZIP PNG último lote
+                    </a>
+                    <button class="btn-trigger" onclick="clearActiveSalonHistory()" style="flex:1; min-width: 160px; background:#ef4444; border-color:#ef4444; color:white;">
+                        Limpiar salón activo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------------------------------------------------- -->
+        <!-- TAB 4: CONFIGURAR PLANTILLA Y PERSONALIZAR           -->
+        <!-- ---------------------------------------------------- -->
+        <div class="panel" id="templatePanel">
+            <!-- Personalizar Item labels y Opciones -->
+            <div class="card">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>
+                    Personalización de Nombres de Entrada y Ficha
+                </h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="setNombre">Nombre Estudiante</label>
+                        <input type="text" id="setNombre" value="Apellidos y Nombres">
+                    </div>
+                    <div class="form-group">
+                        <label for="setColegio">Colegio</label>
+                        <input type="text" id="setColegio" value="Colegio">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="setGrado">Grado / Salón</label>
+                        <input type="text" id="setGrado" value="Grado">
+                    </div>
+                    <div class="form-group">
+                        <label for="setProcedencia">Procedencia / Ciudad</label>
+                        <input type="text" id="setProcedencia" value="Procedencia">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="setAlternatives">Número de Alternativas</label>
+                        <select id="setAlternatives">
+                            <option value="4">4 Alternativas (A, B, C, D)</option>
+                            <option value="5">5 Alternativas (A, B, C, D, E)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="setQuestions">Número de Preguntas</label>
+                        <input type="text" id="setQuestions" value="15">
+                    </div>
+                </div>
+
+                <button class="btn-trigger" onclick="savePersonalizationSettings()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);">
+                    Guardar Personalización
+                </button>
+            </div>
+
+            <!-- Coordenadas Editor -->
+            <div class="card">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    Ajustes de Alineación y Coordenadas
+                </h2>
+                <p style="font-size:12px; color:var(--text-muted);">Puedes calibrar los márgenes de escaneo de burbujas en doble columna y las cajas OCR.</p>
+                
+                <div class="coords-list" id="coordinatesEditor" style="margin-top: 10px;">
+                    <!-- Dynamic Coordinate sliders / fields -->
+                </div>
+
+                <button class="btn-trigger" onclick="saveTemplateCoordinates()" style="margin-top: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Guardar Ajustes de Coordenadas
+                </button>
+                
+                <div class="alert" id="templateSaveAlert" style="display:none;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Global variables
+        let activeTab = 'scanPanel';
+        let selectedCourse = 'Matematica';
+        let currentGradedData = null; // Temp holder for scan
+        
+        let settingsConfig = null; // Custom labels
+        let templateConfig = null; // Coords layout
+        let answerKeysRegistry = []; // Answer keys from Excel
+
+        // Load custom settings on startup
+        async function loadSettings() {
+            try {
+                const response = await fetch('/get_settings');
+                settingsConfig = await response.json();
+                
+                // Update settings form values
+                document.getElementById('setNombre').value = settingsConfig.labels.nombre;
+                document.getElementById('setColegio').value = settingsConfig.labels.colegio;
+                document.getElementById('setGrado').value = settingsConfig.labels.grado;
+                document.getElementById('setProcedencia').value = settingsConfig.labels.procedencia;
+                document.getElementById('setAlternatives').value = settingsConfig.num_alternatives;
+                document.getElementById('setQuestions').value = settingsConfig.num_questions;
+
+                // Update display labels in dashboard scan form
+                document.getElementById('lblColegio').textContent = settingsConfig.labels.colegio;
+                document.getElementById('lblProcedencia').textContent = settingsConfig.labels.procedencia;
+                document.getElementById('lblGrado').textContent = settingsConfig.labels.grado;
+                
+                // Update display labels in verification cards
+                const lblName = document.getElementById('lblVerifyName');
+                if (lblName) lblName.textContent = `Nombre (${settingsConfig.labels.nombre}):`;
+                
+                // Update registry path info
+                document.getElementById('lblRegistryPath').textContent = 
+                    `${settingsConfig.labels.procedencia} / ${settingsConfig.labels.colegio} / ${settingsConfig.labels.grado}`;
+            } catch (err) {
+                console.error("Error loading settings:", err);
+            }
+        }
+
+        // Run startup load
+        loadSettings();
+        // Show which answer key will be used when scanning
+        setTimeout(refreshActiveKeyBanner, 400);
+
+        // Course toggler
+        const toggleBtns = document.querySelectorAll('.toggle-btn');
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toggleBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedCourse = btn.dataset.value;
+                refreshActiveKeyBanner();
+            });
+        });
+        const salonSelectEl = document.getElementById('salonSelect');
+        if (salonSelectEl) {
+            salonSelectEl.addEventListener('change', refreshActiveKeyBanner);
+        }
+
+        async function refreshActiveKeyBanner() {
+            const body = document.getElementById('activeKeyBannerBody');
+            if (!body) return;
+            const salon = document.getElementById('salonSelect').value;
+            body.textContent = 'Cargando clave…';
+            try {
+                const res = await fetch(`/get_key_meta?salon=${encodeURIComponent(salon)}&curso=${encodeURIComponent(selectedCourse)}`);
+                const meta = await res.json();
+                if (!res.ok) {
+                    body.innerHTML = `<span style="color:#f87171;">${meta.error || 'Sin clave'}</span>`;
+                    return;
+                }
+                const keys = meta.keys || [];
+                const preview = keys.map((k, i) => `Q${i + 1}:${k}`).join(' ');
+                const warn = (meta.warnings && meta.warnings.length)
+                    ? `<div style="color:#fbbf24; margin-top:4px;">⚠ ${meta.warnings.join(' · ')}</div>`
+                    : '';
+                body.innerHTML =
+                    `<div><strong style="color:#e2e8f0;">${meta.salon_resolved}</strong> · ` +
+                    `<strong style="color:#e2e8f0;">${meta.curso_resolved}</strong> ` +
+                    `${meta.valid ? '<span style="color:#4ade80;">✓</span>' : '<span style="color:#f87171;">⚠</span>'}</div>` +
+                    `<div style="margin-top:3px;">FP: <code style="color:#93c5fd;">${meta.fingerprint}</code> · ${meta.num_questions} preguntas</div>` +
+                    `<div style="margin-top:4px; font-family:monospace; color:#cbd5e1; word-break:break-word;">${preview}</div>` +
+                    warn;
+            } catch (err) {
+                body.innerHTML = '<span style="color:#f87171;">No se pudo cargar la clave.</span>';
+            }
+        }
+
+        // Tab switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            const idxMap = { 'scanPanel': 0, 'keysPanel': 1, 'registryPanel': 2, 'templatePanel': 3 };
+            document.querySelectorAll('.tab-btn')[idxMap[tabId]].classList.add('active');
+            activeTab = tabId;
+
+            if (tabId === 'registryPanel') {
+                loadFolderRegistry();
+            }
+            if (tabId === 'templatePanel') {
+                loadTemplateCoordinates();
+            }
+            if (tabId === 'keysPanel') {
+                loadAnswerKeys();
+            }
+        }
+
+        // Camera Scanning
+        const cameraInput = document.getElementById('cameraInput');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const configCard = document.getElementById('configCard');
+        const verificationPanel = document.getElementById('verificationPanel');
+        const scanError = document.getElementById('scanError');
+
+        cameraInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingText').textContent = "Calificando OMR (Est 01)...";
+            scanError.style.display = 'none';
+
+            const salon = document.getElementById('salonSelect').value;
+            const colegio = document.getElementById('colegioInput').value;
+            const lugar = document.getElementById('lugarInput').value;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('salon', salon);
+            formData.append('curso', selectedCourse);
+            formData.append('colegio', colegio);
+            formData.append('lugar', lugar);
+            formData.append('student_index', '1');
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+                const raw = await response.text();
+                let data = {};
+                try { data = JSON.parse(raw); } catch (_) {
+                    throw new Error(response.ok ? 'Respuesta no JSON' : `Error HTTP ${response.status}: ${raw.slice(0, 180)}`);
+                }
+
+                if (response.ok) {
+                    currentGradedData = data;
+                    currentGradedData.salon = salon;
+                    currentGradedData.curso = selectedCourse;
+                    currentGradedData.colegio = colegio;
+                    currentGradedData.lugar = lugar;
+                    
+                    showVerificationPanel(data);
+                } else {
+                    scanError.textContent = data.error || `Error al procesar (${response.status})`;
+                    scanError.style.display = 'block';
+                }
+            } catch (err) {
+                scanError.textContent = err.message || "Error al conectar con el servidor (¿está corriendo en :5000?).";
+                scanError.style.display = 'block';
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+                cameraInput.value = '';
+            }
+        });
+
+        function showVerificationPanel(data) {
+            document.getElementById('idOcrInput').value = data.student_id || data.orden_entrega || '';
+            document.getElementById('horaOcrInput').value = data.hora_entrega || '';
+            document.getElementById('nombreOcrInput').value = data.student_name || '';
+            document.getElementById('colegioOcrInput').value = data.colegio || '';
+            document.getElementById('procedenciaOcrInput').value = data.lugar || '';
+            document.getElementById('gradoOcrInput').value = data.grado || '';
+
+            const conf = data.ocr_confidence || {};
+            const eng = data.ocr_engine || 'n/a';
+            document.getElementById('ocrEngineInfo').textContent =
+                `Motor OCR: ${eng}` +
+                (Object.keys(conf).length ? ` | Conf: ${Object.entries(conf).map(([k,v]) => k + '=' + v).join(', ')}` : '');
+
+            // Trakeo de clave aplicada
+            const keys = data.clave_keys || [];
+            const fp = data.clave_fingerprint || '—';
+            const keySalon = data.clave_salon || data.salon || '';
+            const keyCurso = data.clave_curso || data.curso || '';
+            document.getElementById('claveTrackerInfo').innerHTML =
+                `<strong style="color:#e2e8f0;">${keySalon}</strong> · <strong style="color:#e2e8f0;">${keyCurso}</strong><br>` +
+                `Fingerprint: <code style="color:#93c5fd;">${fp}</code> · ID: <code style="color:#93c5fd;">${data.clave_id || '—'}</code>` +
+                (data.clave_valid === false ? ` <span style="color:#f87171;">⚠ Clave con problemas</span>` : ` <span style="color:#4ade80;">✓ Clave OK</span>`);
+            document.getElementById('claveTrackerPreview').textContent =
+                keys.length ? keys.map((k, i) => `Q${i + 1}:${k}`).join('  ') : 'Sin clave cargada';
+            const warns = data.clave_warnings || [];
+            document.getElementById('claveTrackerWarnings').textContent =
+                warns.length ? ('⚠ ' + warns.join(' · ')) : '';
+
+            document.getElementById('valBuenas').textContent = data.buenas;
+            document.getElementById('valMalas').textContent = data.malas;
+            document.getElementById('valBlancos').textContent = data.en_blanco;
+            document.getElementById('valPuntaje').textContent = `${data.puntaje} pts`;
+            document.getElementById('valName').textContent = data.student_name || '—';
+            document.getElementById('valGradedPreview').src = `${data.graded_image_url}?t=${new Date().getTime()}`;
+
+            const chips = document.getElementById('omrQuestionChips');
+            const details = data.detailed_results || [];
+            if (chips) {
+                if (!details.length) {
+                    chips.innerHTML = '';
+                } else {
+                    chips.innerHTML = details.map((r) => {
+                        const st = (r.estado || '').toLowerCase();
+                        const cls = st === 'bien' ? 'bien' : (st === 'mal' ? 'mal' : 'blanco');
+                        const alum = r.respuesta_alumno || '-';
+                        const ok = r.respuesta_correcta || '';
+                        const title = `Q${r.pregunta}: alumno ${alum} · clave ${ok} · ${r.estado}`;
+                        return `<span class="q-chip ${cls}" title="${title}">Q${r.pregunta} ${alum}</span>`;
+                    }).join('');
+                }
+            }
+
+            // Live sync nombre label when user edits
+            document.getElementById('nombreOcrInput').oninput = (e) => {
+                document.getElementById('valName').textContent = e.target.value || '—';
+            };
+            document.getElementById('idOcrInput').onchange = (e) => {
+                currentGradedData.student_id = e.target.value;
+            };
+
+            configCard.style.display = 'none';
+            verificationPanel.style.display = 'flex';
+        }
+
+        function cancelScanVerification() {
+            verificationPanel.style.display = 'none';
+            configCard.style.display = 'flex';
+            currentGradedData = null;
+        }
+
+        function _gradedDownloadBaseName() {
+            const name = (document.getElementById('nombreOcrInput')?.value || currentGradedData?.student_name || 'alumno')
+                .toString().replace(/[^\w\-]+/g, '_').slice(0, 40);
+            const orden = (document.getElementById('idOcrInput')?.value || currentGradedData?.student_id || 'xx');
+            const salon = (currentGradedData?.salon || 'salon').toString().replace(/\s+/g, '');
+            return `calificado_${salon}_${orden}_${name}`;
+        }
+
+        async function downloadGradedPNG() {
+            const img = document.getElementById('valGradedPreview');
+            if (!img || !img.src) {
+                alert('No hay imagen calificada para descargar.');
+                return;
+            }
+            try {
+                const res = await fetch(img.src);
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${_gradedDownloadBaseName()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                // fallback: open image
+                window.open(img.src, '_blank');
+            }
+        }
+
+        async function downloadGradedPDF() {
+            const imgEl = document.getElementById('valGradedPreview');
+            if (!imgEl || !imgEl.src) {
+                alert('No hay imagen calificada para descargar.');
+                return;
+            }
+            try {
+                const res = await fetch(imgEl.src);
+                const blob = await res.blob();
+                const reader = new FileReader();
+                const dataUrl = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+
+                const { jsPDF } = window.jspdf;
+                // Página A5 vertical (misma proporción que la ficha)
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+                const pageW = pdf.internal.pageSize.getWidth();
+                const pageH = pdf.internal.pageSize.getHeight();
+                // cargar dims naturales
+                const im = new Image();
+                await new Promise((resolve, reject) => {
+                    im.onload = resolve;
+                    im.onerror = reject;
+                    im.src = dataUrl;
+                });
+                const imgRatio = im.width / im.height;
+                const pageRatio = pageW / pageH;
+                let drawW, drawH, ox, oy;
+                if (imgRatio > pageRatio) {
+                    drawW = pageW - 8;
+                    drawH = drawW / imgRatio;
+                } else {
+                    drawH = pageH - 8;
+                    drawW = drawH * imgRatio;
+                }
+                ox = (pageW - drawW) / 2;
+                oy = (pageH - drawH) / 2;
+                pdf.addImage(dataUrl, 'JPEG', ox, oy, drawW, drawH);
+                pdf.save(`${_gradedDownloadBaseName()}.pdf`);
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo generar el PDF. Intente descargar PNG.');
+            }
+        }
+
+        async function confirmScanResults() {
+            if (!currentGradedData) return;
+
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingText').textContent = "Guardando nota en el Excel...";
+
+            const ordenVal = document.getElementById('idOcrInput').value;
+            const payload = {
+                salon: currentGradedData.salon,
+                curso: currentGradedData.curso,
+                colegio: document.getElementById('colegioOcrInput').value || currentGradedData.colegio,
+                lugar: document.getElementById('procedenciaOcrInput').value || currentGradedData.lugar,
+                grado: document.getElementById('gradoOcrInput').value || currentGradedData.grado || '',
+                student_id: ordenVal,
+                student_name: document.getElementById('nombreOcrInput').value || `Estudiante Nº ${ordenVal}`,
+                buenas: parseInt(document.getElementById('valBuenas').textContent),
+                malas: parseInt(document.getElementById('valMalas').textContent),
+                en_blanco: parseInt(document.getElementById('valBlancos').textContent),
+                puntaje: parseInt(document.getElementById('valPuntaje').textContent.replace(' pts','')),
+                hora_entrega: document.getElementById('horaOcrInput').value,
+                orden_entrega: ordenVal,
+                answers: currentGradedData.answers,
+                clave_fingerprint: currentGradedData.clave_fingerprint || '',
+                clave_id: currentGradedData.clave_id || ''
+            };
+
+            try {
+                const response = await fetch('/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    alert("¡Examen calificado e insertado correctamente!");
+                    cancelScanVerification();
+                } else {
+                    const err = await response.json();
+                    alert(`Error al guardar: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Error al guardar.");
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // ----------------------------------------------------
+        // TAB 2: ANSWER KEYS EDITOR PANEL                     //
+        // ----------------------------------------------------
+        async function loadAnswerKeys() {
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingText').textContent = "Cargando claves...";
+            try {
+                const response = await fetch('/get_keys');
+                answerKeysRegistry = await response.json();
+                displayKeysGrid();
+                loadKeysSummaryPanel();
+            } catch (err) {
+                alert("No se pudieron cargar las claves.");
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        async function loadKeysSummaryPanel() {
+            const panel = document.getElementById('keysSummaryPanel');
+            if (!panel) return;
+            try {
+                const res = await fetch('/get_keys_summary');
+                const rows = await res.json();
+                if (!Array.isArray(rows)) {
+                    panel.textContent = rows.error || 'Error al cargar resumen';
+                    return;
+                }
+                panel.innerHTML = '<div style="color:#93c5fd; font-weight:600; margin-bottom:6px;">Trakeo de las 20 claves (10 salones × 2 cursos)</div>' +
+                    rows.map(r => {
+                        const ok = r.valid ? '✓' : '⚠';
+                        const color = r.valid ? '#4ade80' : '#fbbf24';
+                        return `<div style="padding:3px 0; border-bottom:1px solid #1e293b;">` +
+                            `<span style="color:${color}">${ok}</span> ` +
+                            `<strong>${r.Salon}</strong> / ${r.Curso} · ` +
+                            `<code style="color:#93c5fd">${r.fingerprint || '—'}</code><br>` +
+                            `<span style="opacity:0.85">${r.preview || ''}</span></div>`;
+                    }).join('');
+            } catch (e) {
+                panel.textContent = 'No se pudo cargar el resumen de claves.';
+            }
+        }
+
+        function displayKeysGrid() {
+            const salon = document.getElementById('keysSalonSelect').value;
+            const curso = document.getElementById('keysCourseSelect').value;
+            
+            // Find existing row (exact match first)
+            let keyRow = answerKeysRegistry.find(k => k.Salon === salon && k.Curso === curso);
+            
+            // Fallback default keys (15 A's) if row is missing
+            if (!keyRow) {
+                keyRow = { Salon: salon, Curso: curso };
+                for (let i = 1; i <= 15; i++) {
+                    keyRow[`Q${i}`] = "A";
+                }
+                answerKeysRegistry.push(keyRow);
+            }
+
+            const body = document.getElementById('keysGridBody');
+            body.innerHTML = '';
+            
+            const numQuestions = parseInt(settingsConfig ? settingsConfig.num_questions : 15);
+            const numAlternatives = parseInt(settingsConfig ? settingsConfig.num_alternatives : 4);
+            const alternatives = ["A", "B", "C", "D", "E"].slice(0, numAlternatives);
+
+            // Re-render header th elements based on alternatives count
+            const headerRow = document.getElementById('keysGridHeader');
+            headerRow.innerHTML = `<th>Preg.</th><th>Clave Correcta</th>`;
+
+            // Detect invalid letters (e.g. E when only A-D allowed)
+            const invalidQs = [];
+            for (let q = 1; q <= numQuestions; q++) {
+                const tr = document.createElement('tr');
+                
+                const tdNum = document.createElement('td');
+                tdNum.innerHTML = `<strong>Q${q}</strong>`;
+                
+                const tdKeys = document.createElement('td');
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'key-btn-row';
+                
+                let currentAnswer = (keyRow[`Q${q}`] || "A").toString().trim().toUpperCase();
+                if (!alternatives.includes(currentAnswer)) {
+                    invalidQs.push(`Q${q}=${currentAnswer}`);
+                }
+
+                alternatives.forEach(letter => {
+                    const btn = document.createElement('button');
+                    btn.className = `key-option-btn ${letter === currentAnswer ? 'active' : ''}`;
+                    btn.textContent = letter;
+                    btn.onclick = () => {
+                        // Update active state in UI
+                        btnContainer.querySelectorAll('.key-option-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        // Update state in Registry
+                        keyRow[`Q${q}`] = letter;
+                        updateKeysFingerprintInfo(keyRow, numQuestions);
+                    };
+                    btnContainer.appendChild(btn);
+                });
+                
+                tdKeys.appendChild(btnContainer);
+                tr.appendChild(tdNum);
+                tr.appendChild(tdKeys);
+                body.appendChild(tr);
+            }
+
+            updateKeysFingerprintInfo(keyRow, numQuestions, invalidQs);
+        }
+
+        function updateKeysFingerprintInfo(keyRow, numQuestions, invalidQs = []) {
+            const el = document.getElementById('keysFingerprintInfo');
+            if (!el) return;
+            const keys = [];
+            for (let i = 1; i <= numQuestions; i++) {
+                keys.push((keyRow[`Q${i}`] || 'A').toString().trim().toUpperCase());
+            }
+            // fingerprint simple client-side (no crypto) — server computes real one on save
+            const preview = keys.map((k, i) => `Q${i + 1}:${k}`).join(' ');
+            let html = `<div><strong style="color:#e2e8f0;">${keyRow.Salon}</strong> · <strong style="color:#e2e8f0;">${keyRow.Curso}</strong></div>`;
+            html += `<div style="margin-top:4px; font-family:monospace; word-break:break-word;">${preview}</div>`;
+            if (invalidQs.length) {
+                html += `<div style="color:#fbbf24; margin-top:6px;">⚠ Letras fuera de alternativas actuales: ${invalidQs.join(', ')}. ` +
+                    `Revisa la clave o sube el nº de alternativas en Plantilla.</div>`;
+            } else {
+                html += `<div style="color:#4ade80; margin-top:6px;">✓ Letras válidas para la configuración actual</div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        async function saveAnswerKeysGrid() {
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingText').textContent = "Guardando claves en el Excel...";
+
+            try {
+                const response = await fetch('/save_keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(answerKeysRegistry)
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const invalid = (result.validation || []).filter(v => !v.valid);
+                    let msg = "¡Claves guardadas en configuracion_ejemplo.xlsx!";
+                    if (invalid.length) {
+                        msg += `\n\n⚠ ${invalid.length} clave(s) con advertencias (p.ej. letra E con 4 alternativas).`;
+                    }
+                    alert(msg);
+                    loadKeysSummaryPanel();
+                    refreshActiveKeyBanner();
+                } else {
+                    alert(`Error al guardar claves: ${result.error}`);
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor.");
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // ----------------------------------------------------
+        // TAB 3: REGISTRO HISTORICO EXPLORER                  //
+        // ----------------------------------------------------
+        async function loadFolderRegistry() {
+            const container = document.getElementById('foldersContainer');
+            container.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Cargando registro...</p>';
+            
+            try {
+                const response = await fetch('/get_registry');
+                const records = await response.json();
+                
+                if (records.length === 0) {
+                    container.innerHTML = '<p style="font-size:13px; color:var(--text-muted); text-align:center;">No hay registros calificados aún.</p>';
+                    return;
+                }
+
+                // Group by Lugar -> Colegio -> Salon
+                const tree = {};
+                records.forEach(r => {
+                    const lug = r.Lugar || "Lugar S/N";
+                    const col = r.Colegio || "Colegio S/N";
+                    const sal = r.Salon || "Salon S/N";
+                    if (!tree[lug]) tree[lug] = {};
+                    if (!tree[lug][col]) tree[lug][col] = {};
+                    if (!tree[lug][col][sal]) tree[lug][col][sal] = [];
+                    tree[lug][col][sal].push(r);
+                });
+
+                container.innerHTML = '';
+                
+                for (const lug in tree) {
+                    const lugFolder = createFolderDom(lug);
+                    const colContainer = lugFolder.querySelector('.folder-content');
+                    
+                    for (const col in tree[lug]) {
+                        const colFolder = createFolderDom(col);
+                        const salContainer = colFolder.querySelector('.folder-content');
+                        
+                        for (const sal in tree[lug][col]) {
+                            const salFolder = createFolderDom(sal);
+                            const studentContainer = salFolder.querySelector('.folder-content');
+                            
+                            tree[lug][col][sal].forEach(student => {
+                                const stItem = document.createElement('div');
+                                stItem.className = 'student-record-item';
+                                stItem.innerHTML = `
+                                    <div class="student-record-meta">
+                                        <strong>${student['Apellidos y Nombres']}</strong>
+                                        <span>ID: ${student['ID_Estudiante']} | B:${student['Buenas']} M:${student['Malas']} Bl:${student['En Blanco']} | ${student['Fecha_Calificacion'] || ''} · ${student['PC_Calificacion'] || ''}</span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="student-score-badge">${student['Puntaje']} pts</div>
+                                        <button onclick="deleteStudentRecord('${student['Salon']}', '${student['Curso']}', '${student['ID_Estudiante']}', '${student['Apellidos y Nombres'].replace(/'/g, "\\'")}')" class="delete-record-btn" title="Eliminar Registro" style="background:transparent; border:none; color:#ef4444; cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.2s;">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                        </button>
+                                    </div>
+                                `;
+                                studentContainer.appendChild(stItem);
+                            });
+                            
+                            salContainer.appendChild(salFolder);
+                        }
+                        colContainer.appendChild(colFolder);
+                    }
+                    container.appendChild(lugFolder);
+                }
+
+            } catch (err) {
+                container.innerHTML = '<p style="font-size:13px; color:var(--danger);">Error al cargar el historial.</p>';
+                console.error(err);
+            }
+        }
+
+        function createFolderDom(title) {
+            const folderDiv = document.createElement('div');
+            folderDiv.className = 'folder';
+            folderDiv.innerHTML = `
+                <div class="folder-header" onclick="toggleFolder(this)">
+                    <span class="folder-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    </span>
+                    <span>${title}</span>
+                </div>
+                <div class="folder-content"></div>
+            `;
+            return folderDiv;
+        }
+
+        function toggleFolder(header) {
+            header.parentElement.classList.toggle('open');
+        }
+
+        // ----------------------------------------------------
+        // BATCH PROCESSING & RECORD MANAGEMENT HANDLERS      //
+        // ----------------------------------------------------
+        let lastBatchId = null;
+
+        async function handleBatchUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            const batchPanel = document.getElementById('batchPanel');
+            const batchStatusText = document.getElementById('batchStatusText');
+            const batchPercentage = document.getElementById('batchPercentage');
+            const batchProgressBar = document.getElementById('batchProgressBar');
+            const batchLog = document.getElementById('batchLog');
+            const spinner = document.getElementById('batchSpinner');
+            const downloadBar = document.getElementById('batchDownloadBar');
+            const thumbs = document.getElementById('batchThumbs');
+
+            batchPanel.style.display = 'flex';
+            batchLog.innerHTML = '';
+            downloadBar.style.display = 'none';
+            thumbs.innerHTML = '';
+            if (spinner) spinner.style.display = 'inline-block';
+            batchProgressBar.style.width = '15%';
+            batchStatusText.textContent = `Enviando ${files.length} fotos…`;
+            batchPercentage.textContent = '…';
+
+            const salon = document.getElementById('salonSelect').value;
+            const activeBtn = document.querySelector('#courseGroup .toggle-btn.active');
+            const curso = activeBtn ? activeBtn.getAttribute('data-value') : 'Matematica';
+            const colegio = document.getElementById('colegioInput').value || 'Colegio S/N';
+            const lugar = document.getElementById('lugarInput').value || 'Lugar S/N';
+
+            logBatch(`Lote OMR (sin OCR) · ${files.length} fichas · ${salon} / ${curso}`);
+            logBatch(`Redimensionando a max 1000px + enumeración Est 01…`);
+
+            const formData = new FormData();
+            formData.append('salon', salon);
+            formData.append('curso', curso);
+            formData.append('colegio', colegio);
+            formData.append('lugar', lugar);
+            formData.append('start_index', '1');
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+
+            try {
+                const resp = await fetch('/batch_scan', { method: 'POST', body: formData });
+                const raw = await resp.text();
+                let data = {};
+                try { data = JSON.parse(raw); } catch (_) {
+                    throw new Error(resp.ok ? 'Respuesta no JSON del servidor' : `HTTP ${resp.status}: ${raw.slice(0, 200)}`);
+                }
+                if (!resp.ok) throw new Error(data.error || `Error en lote (${resp.status})`);
+
+                lastBatchId = data.batch_id;
+                batchProgressBar.style.width = '100%';
+                batchPercentage.textContent = '100%';
+                batchStatusText.textContent = `Listo: ${data.processed} de ${files.length}`;
+                if (spinner) spinner.style.display = 'none';
+                document.getElementById('batchPanelTitle').textContent = 'Lote completado';
+
+                (data.results || []).forEach(r => {
+                    logBatch(
+                        `[OK] ${r.student_name} → ${r.puntaje} pts (B:${r.buenas} M:${r.malas} Bl:${r.en_blanco}) ${r.processing_ms || '?'}ms`,
+                        'color:#4ade80;'
+                    );
+                    if (r.graded_image_url) {
+                        const img = document.createElement('img');
+                        img.src = r.graded_image_url + '?t=' + Date.now();
+                        img.alt = r.student_name;
+                        img.title = r.student_name;
+                        img.style.cssText = 'width:100%; border-radius:6px; border:1px solid #334155; cursor:pointer;';
+                        img.onclick = () => window.open(r.graded_image_url, '_blank');
+                        thumbs.appendChild(img);
+                    }
+                });
+                (data.errors || []).forEach(e => {
+                    logBatch(`[ERROR] Est ${String(e.index).padStart(2,'0')} ${e.file}: ${e.error}`, 'color:#ef4444;');
+                });
+
+                logBatch(`Guardado en Registro. batch_id=${data.batch_id}`, 'color:#38bdf8; font-weight:bold;');
+
+                downloadBar.style.display = 'flex';
+                document.getElementById('batchDoneSummary').textContent =
+                    `${data.processed} cartillas calificadas · etiquetadas Est 01… · listas para descargar`;
+                document.getElementById('btnBatchPdf').href = data.download_pdf_url || `/download_batch_pdf?batch_id=${data.batch_id}`;
+                document.getElementById('btnBatchPng').href = data.download_pngs_url || `/download_batch_pngs?batch_id=${data.batch_id}`;
+                const regPdf = document.getElementById('regBtnPdf');
+                const regPng = document.getElementById('regBtnPng');
+                if (regPdf) regPdf.href = document.getElementById('btnBatchPdf').href;
+                if (regPng) regPng.href = document.getElementById('btnBatchPng').href;
+
+                loadFolderRegistry();
+            } catch (err) {
+                logBatch(`[ERROR] ${err.message}`, 'color:#ef4444;');
+                batchStatusText.textContent = 'Error en el lote';
+                if (spinner) spinner.style.display = 'none';
+            }
+
+            event.target.value = '';
+        }
+        
+        function logBatch(msg, style = "") {
+            const batchLog = document.getElementById('batchLog');
+            const div = document.createElement('div');
+            div.style.cssText = style;
+            div.textContent = msg;
+            batchLog.appendChild(div);
+            batchLog.scrollTop = batchLog.scrollHeight;
+        }
+        
+        async function deleteStudentRecord(salon, curso, studentId, name) {
+            if (!confirm(`¿Está seguro de eliminar el registro de "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/delete_record', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        salon: salon,
+                        curso: curso,
+                        student_id: studentId,
+                        student_name: name
+                    })
+                });
+                
+                if (response.ok) {
+                    alert("Registro eliminado con éxito.");
+                    loadFolderRegistry();
+                } else {
+                    const err = await response.json();
+                    alert(`Error al eliminar: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor.");
+                console.error(err);
+            }
+        }
+        
+        async function clearActiveSalonHistory() {
+            const salon = document.getElementById('salonSelect').value;
+            const activeBtn = document.querySelector('#courseGroup .toggle-btn.active');
+            const curso = activeBtn ? activeBtn.getAttribute('data-value') : 'Matematica';
+            
+            if (!confirm(`¿Está completamente seguro de limpiar todo el historial calificado para el "${salon}" en la materia "${curso}"? Esta acción borrará todas sus filas de Excel.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/clear_records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        salon: salon,
+                        curso: curso
+                    })
+                });
+                
+                if (response.ok) {
+                    alert("Historial limpiado correctamente.");
+                    loadFolderRegistry();
+                } else {
+                    const err = await response.json();
+                    alert(`Error al limpiar: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor.");
+                console.error(err);
+            }
+        }
+
+        // ----------------------------------------------------
+        // TAB 4: PERSONALIZACION & COORDINATE EDITOR          //
+        // ----------------------------------------------------
+        async function savePersonalizationSettings() {
+            const payload = {
+                labels: {
+                    nombre: document.getElementById('setNombre').value,
+                    colegio: document.getElementById('setColegio').value,
+                    grado: document.getElementById('setGrado').value,
+                    procedencia: document.getElementById('setProcedencia').value
+                },
+                num_alternatives: parseInt(document.getElementById('setAlternatives').value),
+                num_questions: parseInt(document.getElementById('setQuestions').value)
+            };
+
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingText').textContent = "Guardando etiquetas de personalización...";
+
+            try {
+                const response = await fetch('/save_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("¡Etiquetas y diseño de la ficha guardados con éxito! Se han actualizado las coordenadas del template.");
+                    await loadSettings();
+                } else {
+                    const err = await response.json();
+                    alert(`Error al guardar: ${err.error}`);
+                }
+            } catch (err) {
+                alert("Error al conectar con la PC.");
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        async function loadTemplateCoordinates() {
+            const editor = document.getElementById('coordinatesEditor');
+            editor.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Cargando coordenadas...</p>';
+            
+            try {
+                const response = await fetch('/get_template');
+                templateConfig = await response.json();
+                
+                editor.innerHTML = '';
+                
+                // Add OMR double-column coordinates
+                if (templateConfig.omr_questions.left_column) {
+                    editor.appendChild(createSectionHeaderDom("Preguntas OMR (Columna Izquierda 1-8)"));
+                    editor.appendChild(createCoordInputDom("Y Inicio", templateConfig.omr_questions.left_column, "y_start", 5));
+                    editor.appendChild(createCoordInputDom("Y Espacio", templateConfig.omr_questions.left_column, "y_step", 1));
+                    
+                    editor.appendChild(createSectionHeaderDom("Preguntas OMR (Columna Derecha 9-15)"));
+                    editor.appendChild(createCoordInputDom("Y Inicio", templateConfig.omr_questions.right_column, "y_start", 5));
+                    editor.appendChild(createCoordInputDom("Y Espacio", templateConfig.omr_questions.right_column, "y_step", 1));
+                }
+                
+                // OCR ROIs (layout real de ficha: cabecera + pie)
+                const ocr = templateConfig.ocr_fields || {};
+                // Compat: migrar formato viejo de dígitos MNIST si aún existiera
+                if (Array.isArray(ocr.numero_orden) && !ocr.numero_orden_box) {
+                    ocr.numero_orden_box = {
+                        x: ocr.numero_orden[0]?.x || 45,
+                        y: ocr.numero_orden[0]?.y || 1035,
+                        w: 110, h: 70
+                    };
+                }
+                if (Array.isArray(ocr.hora_entrega) && !ocr.hora_entrega_box) {
+                    ocr.hora_entrega_box = {
+                        x: ocr.hora_entrega[0]?.x || 160,
+                        y: ocr.hora_entrega[0]?.y || 1035,
+                        w: 150, h: 70
+                    };
+                }
+                // Asegurar cajas nuevas
+                const ensureBox = (key, def) => {
+                    if (!ocr[key] || typeof ocr[key] !== 'object' || Array.isArray(ocr[key])) {
+                        ocr[key] = def;
+                    }
+                };
+                ensureBox('header', {x:45,y:40,w:710,h:145});
+                ensureBox('nombre', {x:180,y:45,w:560,h:40});
+                ensureBox('colegio', {x:120,y:82,w:620,h:38});
+                ensureBox('grado', {x:100,y:118,w:200,h:40});
+                ensureBox('procedencia', {x:400,y:118,w:340,h:40});
+                ensureBox('footer', {x:40,y:1025,w:340,h:90});
+                ensureBox('numero_orden_box', {x:45,y:1035,w:110,h:70});
+                ensureBox('hora_entrega_box', {x:160,y:1035,w:150,h:70});
+                templateConfig.ocr_fields = ocr;
+
+                editor.appendChild(createSectionHeaderDom("OCR Cabecera (Nombre / Colegio / Grado / Procedencia)"));
+                editor.appendChild(createCoordInputDom("Header Y", ocr.header, "y", 5));
+                editor.appendChild(createCoordInputDom("Header Alto", ocr.header, "h", 5));
+                editor.appendChild(createCoordInputDom("Nombre Y", ocr.nombre, "y", 5));
+                editor.appendChild(createCoordInputDom("Colegio Y", ocr.colegio, "y", 5));
+                editor.appendChild(createCoordInputDom("Grado Y", ocr.grado, "y", 5));
+                editor.appendChild(createCoordInputDom("Procedencia X", ocr.procedencia, "x", 5));
+
+                editor.appendChild(createSectionHeaderDom("OCR Pie (Nº Orden + Hora)"));
+                editor.appendChild(createCoordInputDom("Orden X", ocr.numero_orden_box, "x", 5));
+                editor.appendChild(createCoordInputDom("Orden Y", ocr.numero_orden_box, "y", 5));
+                editor.appendChild(createCoordInputDom("Orden Ancho", ocr.numero_orden_box, "w", 5));
+                editor.appendChild(createCoordInputDom("Hora X", ocr.hora_entrega_box, "x", 5));
+                editor.appendChild(createCoordInputDom("Hora Y", ocr.hora_entrega_box, "y", 5));
+                editor.appendChild(createCoordInputDom("Hora Ancho", ocr.hora_entrega_box, "w", 5));
+
+            } catch (err) {
+                editor.innerHTML = '<p style="font-size:13px; color:var(--danger);">Error al cargar coordenadas.</p>';
+                console.error(err);
+            }
+        }
+
+        function createSectionHeaderDom(title) {
+            const h = document.createElement('h3');
+            h.style.fontSize = '12px';
+            h.style.color = '#4ade80';
+            h.style.marginTop = '15px';
+            h.style.textTransform = 'uppercase';
+            h.style.letterSpacing = '0.5px';
+            h.textContent = title;
+            return h;
+        }
+
+        function createCoordInputDom(label, obj, key, step) {
+            const item = document.createElement('div');
+            item.className = 'coord-item';
+            
+            const lbl = document.createElement('span');
+            lbl.className = 'coord-label';
+            lbl.textContent = label;
+            
+            const controls = document.createElement('div');
+            controls.className = 'coord-controls';
+            
+            const btnMinus = document.createElement('button');
+            btnMinus.className = 'coord-btn';
+            btnMinus.textContent = '-';
+            btnMinus.onclick = () => {
+                obj[key] = parseFloat(obj[key]) - step;
+                input.value = obj[key];
+            };
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'coord-input';
+            input.value = obj[key];
+            input.onchange = (e) => {
+                obj[key] = parseFloat(e.target.value);
+            };
+            
+            const btnPlus = document.createElement('button');
+            btnPlus.className = 'coord-btn';
+            btnPlus.textContent = '+';
+            btnPlus.onclick = () => {
+                obj[key] = parseFloat(obj[key]) + step;
+                input.value = obj[key];
+            };
+            
+            controls.appendChild(btnMinus);
+            controls.appendChild(input);
+            controls.appendChild(btnPlus);
+            
+            item.appendChild(lbl);
+            item.appendChild(controls);
+            return item;
+        }
+
+        async function saveTemplateCoordinates() {
+            if (!templateConfig) return;
+            
+            const alertBox = document.getElementById('templateSaveAlert');
+            alertBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/save_template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(templateConfig)
+                });
+                
+                if (response.ok) {
+                    alertBox.textContent = "¡Ajustes de coordenadas guardados con éxito!";
+                    alertBox.className = "alert alert-success";
+                    alertBox.style.display = 'block';
+                } else {
+                    const err = await response.json();
+                    alertBox.textContent = `Error al guardar: ${err.error}`;
+                    alertBox.className = "alert";
+                    alertBox.style.display = 'block';
+                }
+            } catch (err) {
+                alertBox.textContent = "Error al guardar.";
+                alertBox.className = "alert";
+                alertBox.style.display = 'block';
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
