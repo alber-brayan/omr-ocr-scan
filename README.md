@@ -2,7 +2,7 @@
 
 Lectora de fichas OMR para concursos y exámenes. Fotografías o lotes desde el celular, calificación automática y PDF por salón.
 
-**Versión actual: 1.5** · Flask + OpenCV + app Android **Lectora OMR** · Licencia [MIT](LICENSE)
+**Versión actual: 2.0** · Flask + OpenCV + app Android **Lectora OMR** · Licencia [MIT](LICENSE)
 
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-5f8f72.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-3776AB.svg)](https://www.python.org/)
@@ -55,7 +55,7 @@ Proyecto en [`omr-camera/`](omr-camera/).
 2. Copia `omr-camera/local.properties.example` a `local.properties` y apunta al SDK.
 3. Compila e instala en el teléfono.
 
-El APK de la versión 1.5 se publica en [Releases](../../releases).
+El APK de la versión 2.0 se publica en [Releases](../../releases).
 
 Flujo: elegir salón y curso → fotografiar fichas → exportar ZIP → calificar en la app web (pestaña de packs) o con `CalificarPack.bat`.
 
@@ -70,13 +70,14 @@ Imprimir en **A5 a escala 100%**, sin «ajustar a página». Las marcas de esqui
 
 ## Versiones
 
-El código actual en la raíz es **v1.5**. Las versiones anteriores quedan en `archive/` para consulta.
+El código actual en la raíz es **v2.0**. Las versiones anteriores quedan en `archive/` y en la etiqueta `v1.5`.
 
 | Versión | Carpeta | Contenido |
 |---|---|---|
 | 0.1 | [`archive/v0.1`](archive/v0.1) | Primera app Flask (lectura y calificación) |
 | 1.0 | [`archive/v1.0`](archive/v1.0) | Lotes, packs, extracción de claves |
-| **1.5** | raíz + [`omr-camera/`](omr-camera/) | Flask 1.0 + app Android + modelo `mnist.onnx` |
+| 1.5 | etiqueta `v1.5` | Flask + app Android + modelo `mnist.onnx` |
+| **2.0** | raíz + [`omr-camera/`](omr-camera/) | Interfaz web en una columna y app Android con el frente nuevo |
 
 ## Estructura
 

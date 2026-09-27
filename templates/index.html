@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMR + OCR Exam Scanner - Dashboard</title>
+    <meta name="theme-color" content="#070b17">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Lectora OMR profesional para calificar fichas ópticas, gestionar claves y consultar resultados en red local.">
+    <title>Lectora OMR · Centro de Calificación</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/pro-ui.css?v=20260927">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-        
         :root {
             --primary: #5f8f72;
             --primary-hover: #4e7a60;
@@ -28,7 +30,7 @@
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Segoe UI Variable', 'Segoe UI', Inter, system-ui, sans-serif;
             background-color: var(--background);
             color: var(--text);
             min-height: 100vh;
@@ -754,17 +756,48 @@
     <div class="container">
         
         <!-- Header -->
-        <header>
-            <h1>OCR OMR SCAN</h1>
-            <p>Calificación óptica de fichas · desarrollo propio</p>
+        <header class="app-hero">
+            <div class="hero-copy">
+                <div class="hero-eyebrow">
+                    <span class="live-status"><i></i>Sistema listo</span>
+                    <span class="network-badge">Red local</span>
+                </div>
+                <h1>LECTORA <span>OMR</span></h1>
+                <p>Centro profesional de calificación óptica para procesar fichas, validar claves y entregar resultados con precisión.</p>
+                <div class="hero-metrics" aria-label="Características principales">
+                    <span><strong>01</strong> Captura inteligente</span>
+                    <span><strong>02</strong> Lotes organizados</span>
+                    <span><strong>03</strong> Resultados inmediatos</span>
+                </div>
+            </div>
+            <div class="scanner-stage" aria-hidden="true">
+                <div class="scanner-orbit orbit-one"></div>
+                <div class="scanner-orbit orbit-two"></div>
+                <div class="scanner-machine">
+                    <div class="scanner-top">
+                        <span class="scanner-light"></span>
+                        <span class="scanner-light"></span>
+                        <span class="scanner-light active"></span>
+                    </div>
+                    <div class="scanner-slot"></div>
+                    <div class="scan-sheet">
+                        <div class="sheet-heading"></div>
+                        <div class="sheet-copy"></div>
+                        <div class="bubble-field"></div>
+                        <div class="scan-beam"></div>
+                    </div>
+                    <div class="scanner-front"><span>OMR</span><i></i></div>
+                </div>
+                <div class="scanner-shadow"></div>
+            </div>
         </header>
 
         <!-- Navigation Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('scanPanel')">Calificar</button>
-            <button class="tab-btn" onclick="switchTab('keysPanel')">Claves</button>
-            <button class="tab-btn" onclick="switchTab('registryPanel')">Registro</button>
-            <button class="tab-btn" onclick="switchTab('templatePanel')">Plantilla</button>
+        <div class="tabs" role="tablist" aria-label="Módulos de la lectora">
+            <button type="button" class="tab-btn active" onclick="switchTab('scanPanel')"><span class="tab-number">01</span><span>Calificar</span></button>
+            <button type="button" class="tab-btn" onclick="switchTab('keysPanel')"><span class="tab-number">02</span><span>Claves</span></button>
+            <button type="button" class="tab-btn" onclick="switchTab('registryPanel')"><span class="tab-number">03</span><span>Registro</span></button>
+            <button type="button" class="tab-btn" onclick="switchTab('templatePanel')"><span class="tab-number">04</span><span>Plantilla</span></button>
         </div>
 
         <!-- ---------------------------------------------------- -->
@@ -1248,9 +1281,9 @@
         </div>
 
         <footer class="site-footer">
-            <strong>OCR OMR SCAN</strong><br>
-            © 2026 Alberto Brayan (A.B.M.R.) · Licencia MIT<br>
-            Perú · OMR OCR SCAN
+            <div class="footer-brand"><span>OMR</span> LECTORA PROFESIONAL</div>
+            <strong>OCR OMR SCAN</strong> · Tecnología desarrollada en Perú<br>
+            © 2026 Alberto Brayan (A.B.M.R.) · Todos los derechos reservados
         </footer>
     </div>
 

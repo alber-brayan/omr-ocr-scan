@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -33,12 +34,15 @@ import androidx.compose.ui.window.Dialog
 import com.lectoraomr.camera.data.ExportMode
 import com.lectoraomr.camera.data.ZipExporter
 import com.lectoraomr.camera.ui.theme.Accent
+import com.lectoraomr.camera.ui.theme.AccentGradient
 import com.lectoraomr.camera.ui.theme.Danger
 import com.lectoraomr.camera.ui.theme.Ink
 import com.lectoraomr.camera.ui.theme.InkHigh
 import com.lectoraomr.camera.ui.theme.InkLift
 import com.lectoraomr.camera.ui.theme.Mute
 import com.lectoraomr.camera.ui.theme.Paper
+import com.lectoraomr.camera.ui.theme.Line
+import com.lectoraomr.camera.ui.theme.proPanel
 
 @Composable
 fun PackExportDialog(
@@ -53,11 +57,12 @@ fun PackExportDialog(
         Column(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(InkLift)
-                .padding(22.dp)
+                .proPanel(radius = 24.dp, elevation = 26.dp, borderColor = Accent.copy(alpha = .22f))
+                .padding(24.dp)
         ) {
-            Text(title, color = Paper, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Text("EXPORTACIÓN OMR", color = Accent, fontWeight = FontWeight.Bold, fontSize = 9.sp, letterSpacing = 1.5.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(title, color = Paper, fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(Modifier.height(6.dp))
             Text(
                 "Se guarda en ${ZipExporter.FOLDER_LABEL}/nombre",
@@ -119,7 +124,7 @@ fun PackExportDialog(
                         .weight(1f)
                         .height(46.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Accent)
+                        .background(AccentGradient)
                         .clickable { onConfirm(name.trim(), mode) },
                     contentAlignment = Alignment.Center
                 ) {
@@ -155,17 +160,16 @@ fun ConfirmDialog(
     Box(
         Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.45f))
+            .background(Color.Black.copy(alpha = 0.68f))
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {
         Column(
             Modifier
                 .padding(28.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(InkLift)
+                .proPanel(radius = 22.dp, elevation = 24.dp, borderColor = if (danger) Danger.copy(alpha = .3f) else Line)
                 .clickable(enabled = false, onClick = {})
-                .padding(20.dp)
+                .padding(22.dp)
         ) {
             Text(title, color = Paper, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
             Spacer(Modifier.height(8.dp))

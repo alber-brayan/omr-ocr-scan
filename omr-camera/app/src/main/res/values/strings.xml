@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lectora OMR</string>
-    <string name="credits_line">© 2026 A.B.M.R · Licencia MIT</string>
+    <string name="credits_line">© 2026 A.B.M.R. · Todos los derechos reservados</string>
 </resources>

@@ -11,6 +11,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -57,17 +59,20 @@ private fun OmrNav(vm: LotsViewModel = viewModel()) {
     val lastName by vm.lastExportName.collectAsStateWithLifecycle()
     var lotExport by remember { mutableStateOf<Lot?>(null) }
 
-    val fade = 120
+    val fade = 210
     NavHost(
         navController = nav,
         startDestination = "home",
         modifier = Modifier
             .fillMaxSize()
             .background(Ink),
-        enterTransition = { fadeIn(tween(fade)) + slideInHorizontally(tween(fade)) { it / 18 } },
-        exitTransition = { fadeOut(tween(90)) },
-        popEnterTransition = { fadeIn(tween(100)) },
-        popExitTransition = { fadeOut(tween(90)) + slideOutHorizontally(tween(110)) { it / 18 } }
+        enterTransition = {
+            fadeIn(tween(fade)) + scaleIn(tween(fade), initialScale = .985f) +
+                slideInHorizontally(tween(fade)) { it / 14 }
+        },
+        exitTransition = { fadeOut(tween(130)) + scaleOut(tween(150), targetScale = .992f) },
+        popEnterTransition = { fadeIn(tween(180)) + scaleIn(tween(180), initialScale = .99f) },
+        popExitTransition = { fadeOut(tween(140)) + slideOutHorizontally(tween(180)) { it / 14 } }
     ) {
         composable("home") {
             HomeScreen(

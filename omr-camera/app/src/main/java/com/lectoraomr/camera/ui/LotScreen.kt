@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -61,12 +64,17 @@ import com.lectoraomr.camera.data.Thumbs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.lectoraomr.camera.ui.theme.Accent
+import com.lectoraomr.camera.ui.theme.AccentGradient
+import com.lectoraomr.camera.ui.theme.AppBackdrop
 import com.lectoraomr.camera.ui.theme.Danger
+import com.lectoraomr.camera.ui.theme.ElectricBlue
 import com.lectoraomr.camera.ui.theme.Ink
 import com.lectoraomr.camera.ui.theme.InkHigh
 import com.lectoraomr.camera.ui.theme.InkLift
 import com.lectoraomr.camera.ui.theme.Mute
 import com.lectoraomr.camera.ui.theme.Paper
+import com.lectoraomr.camera.ui.theme.Line
+import com.lectoraomr.camera.ui.theme.proPanel
 import java.io.File
 
 @Composable
@@ -104,7 +112,7 @@ fun LotScreen(
         reload()
     }
 
-    Box(Modifier.fillMaxSize().background(Ink)) {
+    AppBackdrop(Modifier.fillMaxSize()) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -114,7 +122,9 @@ fun LotScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .proPanel(radius = 18.dp, elevation = 10.dp)
+                    .padding(horizontal = 4.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -128,7 +138,7 @@ fun LotScreen(
                         .padding(8.dp)
                 )
                 Column(Modifier.weight(1f).padding(start = 4.dp)) {
-                    Text(salon, color = Mute, fontSize = 12.sp, letterSpacing = 0.5.sp)
+                    Text("LOTE · $salon", color = Accent, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
                     Text(Catalog.cursoLabel(curso), color = Paper, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
                 }
                 Text("${photos.size}", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -137,8 +147,19 @@ fun LotScreen(
 
             if (photos.isEmpty()) {
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Sin fotos en este lote", color = Mute, fontSize = 15.sp)
+                    Column(
+                        Modifier.padding(28.dp).proPanel(radius = 20.dp, elevation = 10.dp).padding(26.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
+                                .background(Accent.copy(alpha = .12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Outlined.PhotoLibrary, null, tint = Accent, modifier = Modifier.size(24.dp))
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text("Sin fotos en este lote", color = Paper, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                         Spacer(Modifier.height(6.dp))
                         Text("Escanea fichas o importa desde galería.", color = Mute.copy(alpha = 0.75f), fontSize = 13.sp)
                     }
@@ -160,7 +181,8 @@ fun LotScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Ink.copy(alpha = .92f))))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 ActionPill("Escanear", Accent, Ink, Icons.Outlined.CameraAlt, Modifier.weight(1.35f), onScan)
@@ -237,8 +259,10 @@ private fun ActionPill(
     Row(
         modifier
             .height(48.dp)
+            .shadow(10.dp, RoundedCornerShape(14.dp))
             .clip(RoundedCornerShape(14.dp))
             .background(bg)
+            .border(1.dp, fg.copy(alpha = .18f), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
@@ -257,8 +281,10 @@ private fun PhotoCell(file: File, onOpen: () -> Unit) {
     Box(
         Modifier
             .aspectRatio(148f / 210f)
+            .shadow(13.dp, RoundedCornerShape(13.dp))
             .clip(RoundedCornerShape(10.dp))
             .background(InkLift)
+            .border(1.dp, Line.copy(alpha = .85f), RoundedCornerShape(10.dp))
             .clickable(onClick = onOpen)
     ) {
         val shown = bmp
@@ -272,7 +298,9 @@ private fun PhotoCell(file: File, onOpen: () -> Unit) {
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(6.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Ink.copy(alpha = .72f))
+                .padding(horizontal = 6.dp, vertical = 4.dp)
         )
     }
 }
@@ -293,7 +321,7 @@ private fun PhotoViewer(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ink.copy(alpha = 0.96f))
+            .background(Brush.verticalGradient(listOf(Ink.copy(alpha = .97f), Color(0xFF081426))))
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -356,5 +384,4 @@ private fun PhotoViewer(
         }
     }
 }
-
 

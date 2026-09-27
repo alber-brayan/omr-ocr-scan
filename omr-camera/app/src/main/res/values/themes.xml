@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.LectoraOMR" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">#0B0D10</item>
-        <item name="android:navigationBarColor">#0B0D10</item>
-        <item name="android:windowBackground">#0B0D10</item>
+        <item name="android:statusBarColor">#050816</item>
+        <item name="android:navigationBarColor">#050816</item>
+        <item name="android:windowBackground">#050816</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
     </style>
 </resources>

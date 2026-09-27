@@ -53,7 +53,10 @@ import android.os.SystemClock
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -66,12 +69,21 @@ import com.lectoraomr.camera.camera.SheetQuality
 import com.lectoraomr.camera.data.Catalog
 import com.lectoraomr.camera.data.LotRepository
 import com.lectoraomr.camera.ui.theme.Accent
+import com.lectoraomr.camera.ui.theme.AccentGradient
 import com.lectoraomr.camera.ui.theme.Danger
+import com.lectoraomr.camera.ui.theme.ElectricBlue
 import com.lectoraomr.camera.ui.theme.Ink
+import com.lectoraomr.camera.ui.theme.InkHigh
+import com.lectoraomr.camera.ui.theme.Line
 import com.lectoraomr.camera.ui.theme.Mute
 import com.lectoraomr.camera.ui.theme.Paper
 import com.lectoraomr.camera.ui.theme.Warn
 import java.util.concurrent.Executors
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 
 @Composable
 fun CameraScreen(
@@ -141,6 +153,13 @@ fun CameraScreen(
     }
     val cooling = nowTick < cooldownUntil
     val remainMs = (cooldownUntil - nowTick).coerceAtLeast(0L)
+    val pulse = rememberInfiniteTransition(label = "shutter")
+    val shutterScale by pulse.animateFloat(
+        initialValue = 1f,
+        targetValue = if (quality.ready) 1.07f else 1.025f,
+        animationSpec = infiniteRepeatable(tween(if (quality.ready) 720 else 1500), RepeatMode.Reverse),
+        label = "shutterPulse"
+    )
 
     fun vibrate(ms: Long = 35) {
         val v = if (Build.VERSION.SDK_INT >= 31) {
@@ -253,13 +272,29 @@ fun CameraScreen(
             Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.35f)))
         }
 
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(280.dp)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Ink.copy(alpha = .38f), Ink.copy(alpha = .92f))))
+        )
+
         Column(
             Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(19.dp))
+                    .background(Brush.linearGradient(listOf(Ink.copy(alpha = .86f), InkHigh.copy(alpha = .74f))))
+                    .border(1.dp, Line.copy(alpha = .8f), RoundedCornerShape(19.dp))
+                    .padding(horizontal = 8.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     Icons.Outlined.ArrowBack,
                     contentDescription = "Cerrar",
@@ -267,7 +302,8 @@ fun CameraScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Ink.copy(alpha = 0.45f))
+                        .background(InkHigh.copy(alpha = 0.9f))
+                        .border(1.dp, Line, CircleShape)
                         .clickable(onClick = onBack)
                         .padding(8.dp)
                 )
@@ -280,9 +316,11 @@ fun CameraScreen(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        if (replacing) "Reemplazar ficha" else "$count fichas",
-                        color = Mute,
-                        fontSize = 11.sp
+                        if (replacing) "REEMPLAZAR FICHA" else "$count FICHAS · AUTO",
+                        color = if (quality.ready) Accent else Mute,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = .8.sp
                     )
                 }
                 Spacer(Modifier.weight(1f))
@@ -293,7 +331,8 @@ fun CameraScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Ink.copy(alpha = 0.45f))
+                        .background(if (torch) Warn.copy(alpha = .15f) else InkHigh.copy(alpha = .9f))
+                        .border(1.dp, if (torch) Warn.copy(alpha = .5f) else Line, CircleShape)
                         .clickable {
                             torch = !torch
                             camera?.cameraControl?.enableTorch(torch)
@@ -328,8 +367,9 @@ fun CameraScreen(
             Box(
                 Modifier
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Ink.copy(alpha = 0.72f))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Ink.copy(alpha = 0.84f))
+                    .border(1.dp, pillColor.copy(alpha = .38f), RoundedCornerShape(24.dp))
+                    .padding(horizontal = 17.dp, vertical = 9.dp)
             ) {
                 Text(
                     hintText,
@@ -343,26 +383,41 @@ fun CameraScreen(
                 Box(
                     Modifier
                         .size(84.dp)
+                        .graphicsLayer {
+                            scaleX = shutterScale
+                            scaleY = shutterScale
+                        }
+                        .shadow(22.dp, CircleShape, ambientColor = Accent.copy(alpha = .3f))
                         .clip(CircleShape)
-                        .border(3.dp, if (quality.ready) Accent else Paper.copy(alpha = 0.55f), CircleShape)
+                        .background(Ink.copy(alpha = .72f))
+                        .border(2.dp, if (quality.ready) Accent else Paper.copy(alpha = 0.42f), CircleShape)
                 )
                 Box(
                     Modifier
                         .size(68.dp)
                         .clip(CircleShape)
-                        .background(if (quality.ready) Accent else Paper)
+                        .background(if (quality.ready) AccentGradient else Brush.linearGradient(listOf(Paper, Color(0xFFCBD5E1))))
+                        .border(1.dp, Color.White.copy(alpha = .6f), CircleShape)
                         .clickable(enabled = !capturing) { shoot() }
+                )
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(if (quality.ready) Ink else ElectricBlue)
                 )
             }
             Spacer(Modifier.height(10.dp))
             Text(
                 when {
                     coolingNow -> "Pausa 1.5 s para no repetir la foto"
-                    quality.ready && armed -> "Disparo automático"
-                    else -> "4 guías → dispara solo  ·  o toca el botón"
+                    quality.ready && armed -> "LECTURA ESTABLE · DISPARO AUTOMÁTICO"
+                    else -> "ALINEA LAS 4 GUÍAS · O TOCA EL BOTÓN"
                 },
                 color = Mute,
-                fontSize = 11.sp
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = .65.sp
             )
         }
     }

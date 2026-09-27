@@ -1,6 +1,11 @@
 package com.lectoraomr.camera.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -20,6 +25,7 @@ import com.lectoraomr.camera.ui.theme.Danger
 import com.lectoraomr.camera.ui.theme.Ink
 import com.lectoraomr.camera.ui.theme.Sheet
 import com.lectoraomr.camera.ui.theme.Warn
+import com.lectoraomr.camera.ui.theme.ElectricBlue
 
 /** FIT_CENTER content box of the camera stream inside the view. */
 fun fitContent(viewW: Float, viewH: Float, imageAspect: Float): Rect {
@@ -61,6 +67,13 @@ fun SheetOverlay(
     quality: SheetQuality,
     modifier: Modifier = Modifier
 ) {
+    val scan = rememberInfiniteTransition(label = "scanLine")
+    val scanProgress = scan.animateFloat(
+        initialValue = 0.08f,
+        targetValue = 0.92f,
+        animationSpec = infiniteRepeatable(tween(1700), RepeatMode.Reverse),
+        label = "scanProgress"
+    ).value
     val strokeColor = when (quality.level) {
         SheetQuality.Level.Go -> Accent
         SheetQuality.Level.Almost -> Warn
@@ -81,6 +94,23 @@ fun SheetOverlay(
             size = frame.size,
             cornerRadius = CornerRadius(10.dp.toPx()),
             style = Stroke(width = 2.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+        )
+
+        // A moving scan beam gives immediate depth and makes alignment state legible.
+        val beamY = frame.top + frame.height * scanProgress
+        drawLine(
+            color = if (quality.ready) Accent.copy(alpha = .9f) else ElectricBlue.copy(alpha = .42f),
+            start = Offset(frame.left + 12.dp.toPx(), beamY),
+            end = Offset(frame.right - 12.dp.toPx(), beamY),
+            strokeWidth = if (quality.ready) 2.dp.toPx() else 1.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = (if (quality.ready) Accent else ElectricBlue).copy(alpha = .16f),
+            start = Offset(frame.left + 20.dp.toPx(), beamY + 5.dp.toPx()),
+            end = Offset(frame.right - 20.dp.toPx(), beamY + 5.dp.toPx()),
+            strokeWidth = 7.dp.toPx(),
+            cap = StrokeCap.Round
         )
 
         // Printed fiducials: 10 mm box, center 10 mm from page edge.
