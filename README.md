@@ -2,9 +2,9 @@
 
 Lectora de fichas OMR para concursos y exámenes. Fotografías o lotes desde el celular, calificación automática y PDF por salón.
 
-**Versión actual: 2.0** · Flask + OpenCV + app Android **Lectora OMR** · Licencia [MIT](LICENSE)
+**Versión actual: 2.0** · Flask + OpenCV + app Android **Lectora OMR** · [Derechos reservados](LICENSE)
 
-[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-5f8f72.svg)](LICENSE)
+[![Derechos reservados](https://img.shields.io/badge/licencia-derechos%20reservados-5f8f72.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-3776AB.svg)](https://www.python.org/)
 [![Android](https://img.shields.io/badge/android-Lectora%20OMR-3DDC84.svg)](omr-camera/)
 
@@ -96,4 +96,6 @@ archive/               v0.1 y v1.0
 
 ## Licencia
 
-[MIT](LICENSE) © 2026 Alberto Brayan.
+Desarrollo interno. [Todos los derechos reservados](LICENSE) © 2026 Alberto Brayan.
+
+Para usar, copiar o distribuir este proyecto hay que pedir permiso a [alberto.morote.26@unsch.edu.pe](mailto:alberto.morote.26@unsch.edu.pe).

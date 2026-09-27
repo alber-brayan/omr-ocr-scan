@@ -2150,7 +2150,7 @@ def _paint_score_panel(img, buenas, malas, en_blanco, puntaje, scoring=None):
     _draw_grok_mark(img, px1 + 26, py1 + 168, size=18, color=(36, 36, 42))
     cv2.putText(img, "GROK  ·  A.B.M.R", (px1 + 42, py1 + 173),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.38, (40, 40, 48), 1, cv2.LINE_AA)
-    cv2.putText(img, "Licencia MIT", (px1 + 12, py1 + 190),
+    cv2.putText(img, "Derechos reservados", (px1 + 12, py1 + 190),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.32, (110, 110, 118), 1, cv2.LINE_AA)
 
 

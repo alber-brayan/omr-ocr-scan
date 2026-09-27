@@ -1,6 +1,6 @@
 Version: 2.0
 Nombre: OMR OCR SCAN
 App Android: Lectora OMR
-Licencia: MIT
+Licencia: Derechos reservados
 Autor: Alberto Brayan (A.B.M.R.)
 País: Perú

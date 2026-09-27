@@ -38,8 +38,8 @@ _LAST_BATCH = {"id": None, "images": [], "meta": {}}
 
 # Créditos del PDF de lote (minimal).
 DEVELOPER_INITIALS = "A.B.M.R"
-LICENSE_LINE = "Licencia MIT. © 2026 Alberto Brayan."
-RIGHTS_LINE = "Licencia MIT"
+LICENSE_LINE = "Derechos reservados. © 2026 Alberto Brayan."
+RIGHTS_LINE = "Todos los derechos reservados"
 _LOTE_FONTS = {"ui": "Helvetica", "uib": "Helvetica-Bold", "ready": False}
 
 
@@ -120,7 +120,7 @@ def _draw_lote_credits_page(c, page_w, page_h, meta):
     c.drawCentredString(mid, cy - 8 * mm, RIGHTS_LINE)
     c.setFont(ui, 7.2)
     c.setFillColor(muted)
-    c.drawCentredString(mid, cy - 13.5 * mm, "Licencia MIT. Desarrollo propio.")
+    c.drawCentredString(mid, cy - 13.5 * mm, "Desarrollo interno. Uso solo con permiso.")
 
     salon = str((meta or {}).get("salon") or "")
     curso = str((meta or {}).get("curso") or "")
@@ -132,7 +132,7 @@ def _draw_lote_credits_page(c, page_w, page_h, meta):
 
     c.setFont(ui, 6.4)
     c.setFillColor(muted)
-    c.drawCentredString(mid, 14 * mm, "© 2026 Alberto Brayan  ·  Licencia MIT")
+    c.drawCentredString(mid, 14 * mm, "© 2026 Alberto Brayan  ·  Derechos reservados")
 
 
 def build_lote_export_pdf(image_paths, meta=None, batch_id=""):
